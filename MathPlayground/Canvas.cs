@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MathPlayground.Primitives;
 using SkiaSharp;
 
@@ -9,7 +10,7 @@ namespace MathPlayground
     {
         private const int LineMargin = 20;
         private const int ZeroAxisClearance = 20;
-        
+
         private readonly List<GraphPoint2d> _points = new List<GraphPoint2d>();
         private readonly List<Path2d> _paths = new List<Path2d>();
         private readonly int _width, _height;
@@ -26,10 +27,10 @@ namespace MathPlayground
             var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
             _surface = SKSurface.Create(info);
 
-            _minX = -10;
-            _minY = -10;
-            _maxX = 10;
-            _maxY = 10;
+            _minX = 0;
+            _minY = 0;
+            _maxX = 0;
+            _maxY = 0;
             _horizontalLineCount = 10;
             _verticalLineCount = 10;
         }
@@ -45,18 +46,48 @@ namespace MathPlayground
             _paths.Clear();
         }
 
+        public void DrawPoints(params GraphPoint2d[] points)
+        {
+            points ??= Array.Empty<GraphPoint2d>();
+            foreach (var point in points)
+            {
+                AdjustBoundsForPoint(point);
+            }
+            
+            _points.AddRange(points);
+        }
+
+        public void DrawPolygon(params GraphPoint2d[] points)
+        {
+            points ??= Array.Empty<GraphPoint2d>();
+            foreach (var point in points)
+            {
+                AdjustBoundsForPoint(point);
+            }
+            
+            var path = new Path2d(points, true);
+            _paths.Add(path);
+        }
+
         public SKImage Render()
         {
             RecalculateGraphBounds();
             _surface.Canvas.Clear(SKColors.Black);
             
-            DrawAxes();
+            RenderAxes();
+            RenderPoints();
+            RenderPaths();
 
             return _surface.Snapshot();
         }
 
         private void RecalculateGraphBounds()
         {
+            if (_minX >= _maxX || _minY >= _maxY)
+            {
+                var message = $"Invalid min/max bounds: X = {_minX}/{_maxX}, Y = {_minY}/{_maxY}";
+            }
+            
             _usableWidth = (int)(_width - LineMargin * 2.5);
             _pixelsPerXUnit = (float)_usableWidth / (_maxX - _minX);
             
@@ -67,7 +98,7 @@ namespace MathPlayground
             _zeroCanvasY = GetCanvasY(0);
         }
 
-        private void DrawAxes()
+        private void RenderAxes()
         {
             var importantLinePaint = new SKPaint{Color = SKColors.White, StrokeWidth = 2};
             var standardLinePaint = new SKPaint{
@@ -81,32 +112,76 @@ namespace MathPlayground
             var xIncrement = (_maxX - _minX) / _verticalLineCount;
             if (xIncrement <= 0)
             {
-                var message = $"Invalid min/max for X axis values: min = {_minX}, max = {_maxX}";
-                throw new InvalidOperationException(message);
+                xIncrement = 1;
             }
             
             for (var x = 0; x <= _maxX - _minX; x += xIncrement)
             {
-                DrawXValueAxis(_minX + x, standardLinePaint, labelPaint);
+                RenderXValueAxis(_minX + x, standardLinePaint, labelPaint);
             }
 
             var yIncrement = (_maxY - _minY) / _horizontalLineCount;
             if (yIncrement <= 0)
             {
-                var message = $"Invalid min/max for Y axis values: min = {_minX}, max = {_maxX}";
-                throw new InvalidOperationException(message);
+                yIncrement = 1;
             }
             
             for (var x = 0; x <= _maxY - _minY; x += yIncrement)
             {
-                DrawYValueAxis(_minY + x, standardLinePaint, labelPaint);
+                RenderYValueAxis(_minY + x, standardLinePaint, labelPaint);
             }
             
-            DrawXValueAxis(0, importantLinePaint, labelPaint);
-            DrawYValueAxis(0, importantLinePaint, labelPaint);
+            RenderXValueAxis(0, importantLinePaint, labelPaint);
+            RenderYValueAxis(0, importantLinePaint, labelPaint);
         }
 
-        private void DrawXValueAxis(int value, SKPaint linePaint, SKPaint labelPaint)
+        private void RenderPoints()
+        {
+            var paint = new SKPaint{Color = SKColors.White};
+            
+            foreach (var point in _points)
+            {
+                var x = GetCanvasX(point.X);
+                var y = GetCanvasY(point.Y);
+                
+                _surface.Canvas.DrawCircle(new SKPoint(x, y), 5, paint);
+            }
+        }
+
+        private void RenderPaths()
+        {
+            var paint = new SKPaint{Color = SKColors.White};
+
+            foreach (var path in _paths)
+            {
+                var firstPoint = (SKPoint?) null;
+                var lastPoint = (SKPoint?) null;
+                foreach (var point in path.Points)
+                {
+                    var x = GetCanvasX(point.X);
+                    var y = GetCanvasY(point.Y);
+                    var currentPoint = new SKPoint(x, y);
+                    
+                    if (lastPoint != null)
+                    {
+                        _surface.Canvas.DrawLine(lastPoint.Value, currentPoint, paint);
+                    }
+                    else
+                    {
+                        firstPoint = currentPoint;
+                    }
+
+                    lastPoint = currentPoint;
+                }
+
+                if (path.ConnectEndToBeginning && firstPoint != null && lastPoint != null && firstPoint != lastPoint)
+                {
+                    _surface.Canvas.DrawLine(lastPoint.Value, firstPoint.Value, paint);
+                }
+            }
+        }
+
+        private void RenderXValueAxis(int value, SKPaint linePaint, SKPaint labelPaint)
         {
             var canvasX = GetCanvasX(value);
             if (value != 0 && Math.Abs(canvasX - _zeroCanvasX) < ZeroAxisClearance)
@@ -124,7 +199,7 @@ namespace MathPlayground
             _surface.Canvas.DrawText(value.ToString(), labelPoint, labelPaint);
         }
         
-        private void DrawYValueAxis(int value, SKPaint linePaint, SKPaint labelPaint)
+        private void RenderYValueAxis(int value, SKPaint linePaint, SKPaint labelPaint)
         {
             var canvasY = GetCanvasY(value);
             if (value != 0 && Math.Abs(canvasY - _zeroCanvasY) < ZeroAxisClearance)
@@ -142,16 +217,24 @@ namespace MathPlayground
             _surface.Canvas.DrawText(value.ToString(), labelPoint, labelPaint);
         }
 
-        private float GetCanvasX(int value)
+        private float GetCanvasX(float value)
         {
             var numbersFromStart = value - _minX;
             return LineMargin * 1.5f + _pixelsPerXUnit * numbersFromStart;
         }
 
-        private float GetCanvasY(int value)
+        private float GetCanvasY(float value)
         {
             var numbersFromStart = value - _minY;
             return _height - LineMargin * 1.5f - _pixelsPerYUnit * numbersFromStart;
+        }
+
+        private void AdjustBoundsForPoint(GraphPoint2d point)
+        {
+            if (_minX > point.X) _minX = (int) point.X;
+            if (_maxX < point.X) _maxX = (int) point.X;
+            if (_minY > point.Y) _minY = (int) point.Y;
+            if (_maxY < point.Y) _maxY = (int) point.Y;
         }
     }
 }

@@ -1,14 +1,16 @@
+using System.Collections.Generic;
+
 namespace MathPlayground.Primitives
 {
     public class Path2d
     {
-        private readonly GraphPoint2d[] _points;
-        private readonly bool _connectEndToBeginning;
+        public IReadOnlyList<GraphPoint2d> Points { get; }
+        public bool ConnectEndToBeginning { get; }
 
         public Path2d(GraphPoint2d[] points, bool connectEndToBeginning)
         {
-            _points = points;
-            _connectEndToBeginning = connectEndToBeginning;
+            Points = points;
+            ConnectEndToBeginning = connectEndToBeginning;
         }
     }
 }
