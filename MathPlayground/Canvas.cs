@@ -28,8 +28,8 @@ namespace MathPlayground
 
             _minX = -10;
             _minY = -10;
-            _maxX = 100;
-            _maxY = 100;
+            _maxX = 10;
+            _maxY = 10;
             _horizontalLineCount = 10;
             _verticalLineCount = 10;
         }
@@ -79,12 +79,24 @@ namespace MathPlayground
             var labelPaint = new SKPaint{Color = SKColors.White, TextAlign = SKTextAlign.Center};
             
             var xIncrement = (_maxX - _minX) / _verticalLineCount;
+            if (xIncrement <= 0)
+            {
+                var message = $"Invalid min/max for X axis values: min = {_minX}, max = {_maxX}";
+                throw new InvalidOperationException(message);
+            }
+            
             for (var x = 0; x <= _maxX - _minX; x += xIncrement)
             {
                 DrawXValueAxis(_minX + x, standardLinePaint, labelPaint);
             }
 
             var yIncrement = (_maxY - _minY) / _horizontalLineCount;
+            if (yIncrement <= 0)
+            {
+                var message = $"Invalid min/max for Y axis values: min = {_minX}, max = {_maxX}";
+                throw new InvalidOperationException(message);
+            }
+            
             for (var x = 0; x <= _maxY - _minY; x += yIncrement)
             {
                 DrawYValueAxis(_minY + x, standardLinePaint, labelPaint);
