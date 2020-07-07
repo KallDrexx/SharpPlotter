@@ -100,6 +100,26 @@ namespace MathPlayground
             _graphItems.AddPath(new Path2d(points, true), color);
         }
 
+        public void DrawSegments(params GraphPoint2d[] points)
+        {
+            if (points?.Any() != true)
+            {
+                return;
+            }
+            
+            _graphItems.AddPath(new Path2d(points, false));
+        }
+        
+        public void DrawSegments(Color color, params GraphPoint2d[] points)
+        {
+            if (points?.Any() != true)
+            {
+                return;
+            }
+            
+            _graphItems.AddPath(new Path2d(points, false), color);
+        }
+
         public SKImage Render()
         {
             if (_dynamicGraphBounds)
