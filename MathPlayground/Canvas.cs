@@ -11,26 +11,24 @@ namespace MathPlayground
         private const int LineMargin = 20;
         private const int ZeroAxisClearance = 20;
 
-        private readonly List<GraphPoint2d> _points = new List<GraphPoint2d>();
-        private readonly List<Path2d> _paths = new List<Path2d>();
+        private readonly GraphItems _graphItems;
         private readonly int _width, _height;
         private readonly SKSurface _surface;
-        private int _minX, _minY, _maxX, _maxY, _horizontalLineCount, _verticalLineCount;
+        private readonly int _horizontalLineCount, _verticalLineCount;
         private int _usableWidth, _usableHeight;
         private float _pixelsPerXUnit, _pixelsPerYUnit, _zeroCanvasX, _zeroCanvasY;
-
+        private int _minX, _maxX, _minY, _maxY;
+        private bool _dynamicGraphBounds = true;
+        
         public Canvas(int width, int height)
         {
+            _graphItems = new GraphItems();
             _width = width;
             _height = height;
             
             var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
             _surface = SKSurface.Create(info);
-
-            _minX = 0;
-            _minY = 0;
-            _maxX = 0;
-            _maxY = 0;
+            
             _horizontalLineCount = 10;
             _verticalLineCount = 10;
         }
@@ -42,50 +40,69 @@ namespace MathPlayground
 
         public void Clear()
         {
-            _points.Clear();
-            _paths.Clear();
+            _graphItems.Clear();
+        }
+
+        /// <summary>
+        /// Constrains the graph to a specific set of x and y coordinate values
+        /// </summary>
+        public void SetGraphBounds(int minX, int maxX, int minY, int maxY)
+        {
+            if (minX >= maxX || minY >= maxY)
+            {
+                var message = $"Invalid min/max bounds: X = {minX}/{maxX}, Y = {minY}/{maxY}";
+                throw new InvalidOperationException(message);
+            }
+
+            _minX = minX;
+            _maxX = maxX;
+            _minY = minY;
+            _maxY = maxY;
+
+            _dynamicGraphBounds = false;
+        }
+
+        /// <summary>
+        /// Set the graph to constrain itself to the enclosed items
+        /// </summary>
+        public void EnableDynamicGraphBounds()
+        {
+            _dynamicGraphBounds = true;
         }
 
         public void DrawPoints(params GraphPoint2d[] points)
         {
-            points ??= Array.Empty<GraphPoint2d>();
-            foreach (var point in points)
-            {
-                AdjustBoundsForPoint(point);
-            }
-            
-            _points.AddRange(points);
+            _graphItems.AddPoints(points);
         }
 
         public void DrawPolygon(params GraphPoint2d[] points)
         {
-            points ??= Array.Empty<GraphPoint2d>();
-            foreach (var point in points)
+            if (points?.Any() != true)
             {
-                AdjustBoundsForPoint(point);
+                return;
             }
             
-            var path = new Path2d(points, true);
-            _paths.Add(path);
+            _graphItems.AddPaths(new Path2d(points, true));
         }
 
         public SKImage Render()
         {
-            RecalculateGraphBounds();
-            _surface.Canvas.Clear(SKColors.Black);
-            
-            RenderAxes();
-            RenderPoints();
-            RenderPaths();
-
-            return _surface.Snapshot();
-        }
-
-        private void RecalculateGraphBounds()
-        {
-            if (_minX >= _maxX || _minY >= _maxY)
+            if (_dynamicGraphBounds)
             {
-                var message = $"Invalid min/max bounds: X = {_minX}/{_maxX}, Y = {_minY}/{_maxY}";
+                if (_graphItems.HasAnyItems)
+                {
+                    _minX = (int) _graphItems.MinX - 1;
+                    _minY = (int) _graphItems.MinY - 1;
+                    _maxX = (int) _graphItems.MaxX + 1;
+                    _maxY = (int) _graphItems.MaxY + 1;
+                }
+                else
+                {
+                    _minX = -10;
+                    _minY = -10;
+                    _maxX = 10;
+                    _maxX = 10;
+                }
             }
             
             _usableWidth = (int)(_width - LineMargin * 2.5);
@@ -96,6 +113,14 @@ namespace MathPlayground
 
             _zeroCanvasX = GetCanvasX(0);
             _zeroCanvasY = GetCanvasY(0);
+            
+            _surface.Canvas.Clear(SKColors.Black);
+            
+            RenderAxes();
+            RenderPoints();
+            RenderPaths();
+
+            return _surface.Snapshot();
         }
 
         private void RenderAxes()
@@ -139,7 +164,7 @@ namespace MathPlayground
         {
             var paint = new SKPaint{Color = SKColors.White};
             
-            foreach (var point in _points)
+            foreach (var point in _graphItems.Points)
             {
                 var x = GetCanvasX(point.X);
                 var y = GetCanvasY(point.Y);
@@ -152,7 +177,7 @@ namespace MathPlayground
         {
             var paint = new SKPaint{Color = SKColors.White};
 
-            foreach (var path in _paths)
+            foreach (var path in _graphItems.Paths)
             {
                 var firstPoint = (SKPoint?) null;
                 var lastPoint = (SKPoint?) null;
@@ -227,14 +252,6 @@ namespace MathPlayground
         {
             var numbersFromStart = value - _minY;
             return _height - LineMargin * 1.5f - _pixelsPerYUnit * numbersFromStart;
-        }
-
-        private void AdjustBoundsForPoint(GraphPoint2d point)
-        {
-            if (_minX > point.X) _minX = (int) point.X;
-            if (_maxX < point.X) _maxX = (int) point.X;
-            if (_minY > point.Y) _minY = (int) point.Y;
-            if (_maxY < point.Y) _maxY = (int) point.Y;
         }
     }
 }
