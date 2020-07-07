@@ -1,9 +1,9 @@
 namespace MathPlayground.Primitives
 {
-    public struct GraphPoint2d
+    public readonly struct GraphPoint2d
     {
-        public float X;
-        public float Y;
+        public readonly float X;
+        public readonly float Y;
 
         public GraphPoint2d(float x, float y)
         {

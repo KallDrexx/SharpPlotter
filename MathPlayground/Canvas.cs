@@ -75,6 +75,11 @@ namespace MathPlayground
             _graphItems.AddPoints(points);
         }
 
+        public void DrawPoints(Color color, params GraphPoint2d[] points)
+        {
+            _graphItems.AddPoints(points, color);
+        }
+
         public void DrawPolygon(params GraphPoint2d[] points)
         {
             if (points?.Any() != true)
@@ -82,7 +87,17 @@ namespace MathPlayground
                 return;
             }
             
-            _graphItems.AddPaths(new Path2d(points, true));
+            _graphItems.AddPath(new Path2d(points, true));
+        }
+        
+        public void DrawPolygon(Color color, params GraphPoint2d[] points)
+        {
+            if (points?.Any() != true)
+            {
+                return;
+            }
+            
+            _graphItems.AddPath(new Path2d(points, true), color);
         }
 
         public SKImage Render()
@@ -162,12 +177,14 @@ namespace MathPlayground
 
         private void RenderPoints()
         {
-            var paint = new SKPaint{Color = SKColors.White};
-            
             foreach (var point in _graphItems.Points)
             {
                 var x = GetCanvasX(point.X);
                 var y = GetCanvasY(point.Y);
+
+                var paint = _graphItems.ColorMap.TryGetValue(point, out var color)
+                    ? new SKPaint {Color = color}
+                    : new SKPaint {Color = SKColors.White}; 
                 
                 _surface.Canvas.DrawCircle(new SKPoint(x, y), 5, paint);
             }
@@ -175,12 +192,15 @@ namespace MathPlayground
 
         private void RenderPaths()
         {
-            var paint = new SKPaint{Color = SKColors.White};
-
             foreach (var path in _graphItems.Paths)
             {
                 var firstPoint = (SKPoint?) null;
                 var lastPoint = (SKPoint?) null;
+                
+                var paint = _graphItems.ColorMap.TryGetValue(path, out var color)
+                    ? new SKPaint {Color = color}
+                    : new SKPaint {Color = SKColors.White}; 
+                
                 foreach (var point in path.Points)
                 {
                     var x = GetCanvasX(point.X);

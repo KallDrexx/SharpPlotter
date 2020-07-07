@@ -9,10 +9,13 @@ namespace MathPlayground
     {
         private readonly List<GraphPoint2d> _points  = new List<GraphPoint2d>();
         private readonly List<Path2d> _paths = new List<Path2d>();
+        private readonly Dictionary<object, Color> _colorMap = new Dictionary<object, Color>();
 
         public IEnumerable<GraphPoint2d> Points => _points;
         public IEnumerable<Path2d> Paths => _paths;
+        public Dictionary<object, Color> ColorMap => _colorMap;
         public bool HasAnyItems => _points.Any() || _paths.Any();
+        
         public float MinX { get; private set; }
         public float MinY { get; private set; }
         public float MaxX { get; private set; }
@@ -23,7 +26,7 @@ namespace MathPlayground
             Clear();
         }
 
-        public void AddPoints(params GraphPoint2d[] points)
+        public void AddPoints(GraphPoint2d[] points, Color? color = null)
         {
             points ??= Array.Empty<GraphPoint2d>();
             
@@ -31,21 +34,25 @@ namespace MathPlayground
             {
                 RecalculateMinMax(point.X, point.Y);
                 _points.Add(point);
+                
+                if (color != null)
+                {
+                    _colorMap.Add(point, color.Value);
+                }
             }
         }
 
-        public void AddPaths(params Path2d[] paths)
+        public void AddPath(Path2d path, Color? color = null)
         {
-            paths ??= Array.Empty<Path2d>();
-            
-            foreach (var path in paths)
+            foreach (var point in path.Points)
             {
-                foreach (var point in path.Points)
-                {
-                    RecalculateMinMax(point.X, point.Y);
-                }
+                RecalculateMinMax(point.X, point.Y);
+            }
                 
-                _paths.Add(path);
+            _paths.Add(path);
+            if (color != null)
+            {
+                _colorMap.Add(path, color.Value);
             }
         }
 
