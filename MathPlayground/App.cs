@@ -1,4 +1,6 @@
 ﻿using System.Runtime.InteropServices;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -35,15 +37,27 @@ namespace MathPlayground
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _currentKeyState = Keyboard.GetState();
-            
-            _canvas.SetGraphBounds(-10, 10, -10, 10);
-            _canvas.DrawPoints(Color.Green, (6,4), (3,1), (1,2), (-1,5), (-3,4), (-4,4), (-5,3), (-5,2), (-2,2),
+
+            var options = ScriptOptions.Default
+                .WithImports("System")
+                .WithReferences(typeof(GraphItems).Assembly)
+                .WithImports("MathPlayground")
+                .WithImports("MathPlayground.Primitives")
+                .WithReferences(typeof(Color).Assembly)
+                .WithImports("Microsoft.Xna.Framework");
+
+            var globals = new ScriptGlobals {Canvas = _canvas};
+
+            CSharpScript.RunAsync(@"
+            Canvas.SetGraphBounds(-10, 10, -10, 10);
+            Canvas.DrawPoints(Color.Green, (6,4), (3,1), (1,2), (-1,5), (-3,4), (-4,4), (-5,3), (-5,2), (-2,2),
                 (-5,1), (-4,0), (-2,1), (-1,0), (0, -3), (-1,-4), (1,-4), (2,-3), (1,-2), (3,-1), (5,1));
             
-            _canvas.DrawPolygon(Color.Red, (6,4), (3,1), (1,2), (-1,5), (-3,4), (-4,4), (-5,3), (-5,2), (-2,2),
+            Canvas.DrawPolygon(Color.Red, (6,4), (3,1), (1,2), (-1,5), (-3,4), (-4,4), (-5,3), (-5,2), (-2,2),
                 (-5,1), (-4,0), (-2,1), (-1,0), (0, -3), (-1,-4), (1,-4), (2,-3), (1,-2), (3,-1), (5,1));
             
-            _canvas.DrawSegments((-1, -9), (-2, -8), (-3, -5));
+            Canvas.DrawSegments((-1, -9), (-2, -8), (-3, -5));
+", options, globals).GetAwaiter().GetResult();
 
             base.Initialize();
         }
@@ -52,8 +66,54 @@ namespace MathPlayground
         {
             _previousKeyState = _currentKeyState;
             _currentKeyState = Keyboard.GetState();
+            
+            var requireReRender = HandleKeyboardInput();
 
-            bool requireReRender = false;
+            if (_graphTexture == null || requireReRender)
+            {
+                using var image = _canvas.Render();
+                _graphTexture = RenderImageToTexture2D(image, GraphicsDevice);
+            }
+            
+            
+            
+            
+
+            base.Update(gameTime);
+        }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+            
+            _spriteBatch.Begin();
+            _spriteBatch.Draw(_graphTexture, Vector2.Zero, Color.White);
+            _spriteBatch.End();
+            
+            base.Draw(gameTime);
+        }
+
+        private static Texture2D RenderImageToTexture2D(SKImage image, GraphicsDevice graphicsDevice)
+        {
+            var pixelMap = image.PeekPixels();
+            var pointer = pixelMap.GetPixels();
+            var pixels = new byte[image.Height * pixelMap.RowBytes];
+
+            Marshal.Copy(pointer, pixels, 0, pixels.Length);
+            var texture = new Texture2D(graphicsDevice, image.Width, image.Height);
+            texture.SetData(pixels);
+
+            return texture;
+        }
+
+        private bool HasBeenPressed(Keys key)
+        {
+            return _currentKeyState.IsKeyDown(key) && !_previousKeyState.IsKeyDown(key);
+        }
+
+        private bool HandleKeyboardInput()
+        {
+            var requireReRender = false;
             if (HasBeenPressed(Keys.PageUp))
             {
                 requireReRender = true;
@@ -62,7 +122,7 @@ namespace MathPlayground
                     _canvas.MinY - 1,
                     _canvas.MaxY + 1);
             }
-            
+
             if (HasBeenPressed(Keys.PageDown))
             {
                 if (_canvas.MaxX - _canvas.MinX > 2 &&
@@ -84,7 +144,7 @@ namespace MathPlayground
                     _canvas.MinY - 1,
                     _canvas.MaxY - 1);
             }
-            
+
             if (HasBeenPressed(Keys.Down))
             {
                 requireReRender = true;
@@ -93,7 +153,7 @@ namespace MathPlayground
                     _canvas.MinY + 1,
                     _canvas.MaxY + 1);
             }
-            
+
             if (HasBeenPressed(Keys.Left))
             {
                 requireReRender = true;
@@ -102,7 +162,7 @@ namespace MathPlayground
                     _canvas.MinY,
                     _canvas.MaxY);
             }
-            
+
             if (HasBeenPressed(Keys.Right))
             {
                 requireReRender = true;
@@ -118,42 +178,12 @@ namespace MathPlayground
                 _canvas.EnableDynamicGraphBounds();
             }
 
-            if (_graphTexture == null || requireReRender)
-            {
-                using var image = _canvas.Render();
-                _graphTexture = RenderImageToTexture2D(image, GraphicsDevice);
-            }
-
-            base.Update(gameTime);
+            return requireReRender;
         }
 
-        protected override void Draw(GameTime gameTime)
+        public class ScriptGlobals
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
-            
-            _spriteBatch.Begin();
-            _spriteBatch.Draw(_graphTexture, Vector2.Zero, Color.White);
-            _spriteBatch.End();
-            
-            base.Draw(gameTime);
-        }
-        
-        private static Texture2D RenderImageToTexture2D(SKImage image, GraphicsDevice graphicsDevice)
-        {
-            var pixelMap = image.PeekPixels();
-            var pointer = pixelMap.GetPixels();
-            var pixels = new byte[image.Height * pixelMap.RowBytes];
-
-            Marshal.Copy(pointer, pixels, 0, pixels.Length);
-            var texture = new Texture2D(graphicsDevice, image.Width, image.Height);
-            texture.SetData(pixels);
-
-            return texture;
-        }
-        
-        private bool HasBeenPressed(Keys key)
-        {
-            return _currentKeyState.IsKeyDown(key) && !_previousKeyState.IsKeyDown(key);
+            public Canvas Canvas { get; set; }
         }
     }
 }
