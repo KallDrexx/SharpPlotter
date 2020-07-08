@@ -17,8 +17,12 @@ namespace MathPlayground
         private readonly int _horizontalLineCount, _verticalLineCount;
         private int _usableWidth, _usableHeight;
         private float _pixelsPerXUnit, _pixelsPerYUnit, _zeroCanvasX, _zeroCanvasY;
-        private int _minX, _maxX, _minY, _maxY;
         private bool _dynamicGraphBounds = true;
+        
+        public int MinX { get; private set; }
+        public int MaxX { get; private set; }
+        public int MinY { get; private set; }
+        public int MaxY { get; private set; }
         
         public Canvas(int width, int height)
         {
@@ -54,10 +58,10 @@ namespace MathPlayground
                 throw new InvalidOperationException(message);
             }
 
-            _minX = minX;
-            _maxX = maxX;
-            _minY = minY;
-            _maxY = maxY;
+            MinX = minX;
+            MaxX = maxX;
+            MinY = minY;
+            MaxY = maxY;
 
             _dynamicGraphBounds = false;
         }
@@ -126,25 +130,25 @@ namespace MathPlayground
             {
                 if (_graphItems.HasAnyItems)
                 {
-                    _minX = (int) _graphItems.MinX - 1;
-                    _minY = (int) _graphItems.MinY - 1;
-                    _maxX = (int) _graphItems.MaxX + 1;
-                    _maxY = (int) _graphItems.MaxY + 1;
+                    MinX = (int) _graphItems.MinX - 1;
+                    MinY = (int) _graphItems.MinY - 1;
+                    MaxX = (int) _graphItems.MaxX + 1;
+                    MaxY = (int) _graphItems.MaxY + 1;
                 }
                 else
                 {
-                    _minX = -10;
-                    _minY = -10;
-                    _maxX = 10;
-                    _maxX = 10;
+                    MinX = -10;
+                    MinY = -10;
+                    MaxX = 10;
+                    MaxX = 10;
                 }
             }
             
             _usableWidth = (int)(_width - LineMargin * 2.5);
-            _pixelsPerXUnit = (float)_usableWidth / (_maxX - _minX);
+            _pixelsPerXUnit = (float)_usableWidth / (MaxX - MinX);
             
             _usableHeight = (int)(_height - LineMargin * 2.5);
-            _pixelsPerYUnit = (float) _usableHeight / (_maxY - _minY);
+            _pixelsPerYUnit = (float) _usableHeight / (MaxY - MinY);
 
             _zeroCanvasX = GetCanvasX(0);
             _zeroCanvasY = GetCanvasY(0);
@@ -169,26 +173,26 @@ namespace MathPlayground
             
             var labelPaint = new SKPaint{Color = SKColors.White, TextAlign = SKTextAlign.Center};
             
-            var xIncrement = (_maxX - _minX) / _verticalLineCount;
+            var xIncrement = (MaxX - MinX) / _verticalLineCount;
             if (xIncrement <= 0)
             {
                 xIncrement = 1;
             }
             
-            for (var x = 0; x <= _maxX - _minX; x += xIncrement)
+            for (var x = 0; x <= MaxX - MinX; x += xIncrement)
             {
-                RenderXValueAxis(_minX + x, standardLinePaint, labelPaint);
+                RenderXValueAxis(MinX + x, standardLinePaint, labelPaint);
             }
 
-            var yIncrement = (_maxY - _minY) / _horizontalLineCount;
+            var yIncrement = (MaxY - MinY) / _horizontalLineCount;
             if (yIncrement <= 0)
             {
                 yIncrement = 1;
             }
             
-            for (var x = 0; x <= _maxY - _minY; x += yIncrement)
+            for (var x = 0; x <= MaxY - MinY; x += yIncrement)
             {
-                RenderYValueAxis(_minY + x, standardLinePaint, labelPaint);
+                RenderYValueAxis(MinY + x, standardLinePaint, labelPaint);
             }
             
             RenderXValueAxis(0, importantLinePaint, labelPaint);
@@ -284,13 +288,13 @@ namespace MathPlayground
 
         private float GetCanvasX(float value)
         {
-            var numbersFromStart = value - _minX;
+            var numbersFromStart = value - MinX;
             return LineMargin * 1.5f + _pixelsPerXUnit * numbersFromStart;
         }
 
         private float GetCanvasY(float value)
         {
-            var numbersFromStart = value - _minY;
+            var numbersFromStart = value - MinY;
             return _height - LineMargin * 1.5f - _pixelsPerYUnit * numbersFromStart;
         }
     }
