@@ -52,9 +52,11 @@ namespace MathPlayground
         {
             _previousKeyState = _currentKeyState;
             _currentKeyState = Keyboard.GetState();
-            
+
+            bool requireReRender = false;
             if (HasBeenPressed(Keys.PageUp))
             {
+                requireReRender = true;
                 _canvas.SetGraphBounds(_canvas.MinX - 1,
                     _canvas.MaxX + 1,
                     _canvas.MinY - 1,
@@ -66,6 +68,7 @@ namespace MathPlayground
                 if (_canvas.MaxX - _canvas.MinX > 2 &&
                     _canvas.MaxY - _canvas.MinY > 2)
                 {
+                    requireReRender = true;
                     _canvas.SetGraphBounds(_canvas.MinX + 1,
                         _canvas.MaxX - 1,
                         _canvas.MinY + 1,
@@ -75,6 +78,7 @@ namespace MathPlayground
 
             if (HasBeenPressed(Keys.Up))
             {
+                requireReRender = true;
                 _canvas.SetGraphBounds(_canvas.MinX,
                     _canvas.MaxX,
                     _canvas.MinY - 1,
@@ -83,6 +87,7 @@ namespace MathPlayground
             
             if (HasBeenPressed(Keys.Down))
             {
+                requireReRender = true;
                 _canvas.SetGraphBounds(_canvas.MinX,
                     _canvas.MaxX,
                     _canvas.MinY + 1,
@@ -91,6 +96,7 @@ namespace MathPlayground
             
             if (HasBeenPressed(Keys.Left))
             {
+                requireReRender = true;
                 _canvas.SetGraphBounds(_canvas.MinX + 1,
                     _canvas.MaxX + 1,
                     _canvas.MinY,
@@ -99,6 +105,7 @@ namespace MathPlayground
             
             if (HasBeenPressed(Keys.Right))
             {
+                requireReRender = true;
                 _canvas.SetGraphBounds(_canvas.MinX - 1,
                     _canvas.MaxX - 1,
                     _canvas.MinY,
@@ -107,12 +114,16 @@ namespace MathPlayground
 
             if (HasBeenPressed(Keys.Back))
             {
+                requireReRender = true;
                 _canvas.EnableDynamicGraphBounds();
             }
-            
-            using var image = _canvas.Render();
-            _graphTexture = RenderImageToTexture2D(image, GraphicsDevice);
-            
+
+            if (_graphTexture == null || requireReRender)
+            {
+                using var image = _canvas.Render();
+                _graphTexture = RenderImageToTexture2D(image, GraphicsDevice);
+            }
+
             base.Update(gameTime);
         }
 
