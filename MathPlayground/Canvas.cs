@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using MathPlayground.Primitives;
 using SkiaSharp;
@@ -26,7 +25,7 @@ namespace MathPlayground
             _width = width;
             _height = height;
             
-            var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+            var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
             _surface = SKSurface.Create(info);
             
             _horizontalLineCount = 10;
