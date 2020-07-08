@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using MathPlayground.Primitives;
+using Microsoft.Xna.Framework;
 using SkiaSharp;
 
 namespace MathPlayground
@@ -202,7 +203,7 @@ namespace MathPlayground
                 var y = GetCanvasY(point.Y);
 
                 var paint = _graphItems.ColorMap.TryGetValue(point, out var color)
-                    ? new SKPaint {Color = color}
+                    ? new SKPaint {Color = new SKColor(color.R, color.G, color.B)}
                     : new SKPaint {Color = SKColors.White}; 
                 
                 _surface.Canvas.DrawCircle(new SKPoint(x, y), 5, paint);
@@ -217,7 +218,7 @@ namespace MathPlayground
                 var lastPoint = (SKPoint?) null;
                 
                 var paint = _graphItems.ColorMap.TryGetValue(path, out var color)
-                    ? new SKPaint {Color = color}
+                    ? new SKPaint {Color = new SKColor(color.R, color.G, color.B)}
                     : new SKPaint {Color = SKColors.White}; 
                 
                 foreach (var point in path.Points)

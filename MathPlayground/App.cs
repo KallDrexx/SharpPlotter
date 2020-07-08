@@ -33,10 +33,10 @@ namespace MathPlayground
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             
             _canvas.SetGraphBounds(-10, 10, -10, 10);
-            _canvas.DrawPoints(Primitives.Color.Green, (6,4), (3,1), (1,2), (-1,5), (-3,4), (-4,4), (-5,3), (-5,2), (-2,2),
+            _canvas.DrawPoints(Color.Green, (6,4), (3,1), (1,2), (-1,5), (-3,4), (-4,4), (-5,3), (-5,2), (-2,2),
                 (-5,1), (-4,0), (-2,1), (-1,0), (0, -3), (-1,-4), (1,-4), (2,-3), (1,-2), (3,-1), (5,1));
             
-            _canvas.DrawPolygon(Primitives.Color.Red, (6,4), (3,1), (1,2), (-1,5), (-3,4), (-4,4), (-5,3), (-5,2), (-2,2),
+            _canvas.DrawPolygon(Color.Red, (6,4), (3,1), (1,2), (-1,5), (-3,4), (-4,4), (-5,3), (-5,2), (-2,2),
                 (-5,1), (-4,0), (-2,1), (-1,0), (0, -3), (-1,-4), (1,-4), (2,-3), (1,-2), (3,-1), (5,1));
             
             _canvas.DrawSegments((-1, -9), (-2, -8), (-3, -5));
