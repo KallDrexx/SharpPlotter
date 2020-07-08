@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using SkiaSharp;
 
-namespace MathPlayground
+namespace SharpPlotter
 {
     public class App : Game
     {
@@ -41,8 +41,8 @@ namespace MathPlayground
             var options = ScriptOptions.Default
                 .WithImports("System")
                 .WithReferences(typeof(GraphItems).Assembly)
-                .WithImports("MathPlayground")
-                .WithImports("MathPlayground.Primitives")
+                .WithImports("SharpPlotter")
+                .WithImports("SharpPlotter.Primitives")
                 .WithReferences(typeof(Color).Assembly)
                 .WithImports("Microsoft.Xna.Framework");
 

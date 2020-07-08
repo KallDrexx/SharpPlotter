@@ -1,4 +1,4 @@
-namespace MathPlayground.Primitives
+namespace SharpPlotter.Primitives
 {
     public readonly struct GraphPoint2d
     {

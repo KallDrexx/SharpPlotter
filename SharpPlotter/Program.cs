@@ -1,4 +1,4 @@
-﻿namespace MathPlayground
+﻿namespace SharpPlotter
 {
     class Program
     {

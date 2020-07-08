@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace MathPlayground.Primitives
+namespace SharpPlotter.Primitives
 {
     public class Path2d
     {

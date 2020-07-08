@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
-using MathPlayground.Primitives;
 using Microsoft.Xna.Framework;
+using SharpPlotter.Primitives;
 using SkiaSharp;
 
-namespace MathPlayground
+namespace SharpPlotter
 {
     public class Canvas : IDisposable
     {

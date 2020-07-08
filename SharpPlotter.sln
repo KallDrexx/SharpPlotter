@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathPlayground", "MathPlayground\MathPlayground.csproj", "{D2178D55-A0E6-435C-82C9-EA9E0E9FE45E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpPlotter", "SharpPlotter\SharpPlotter.csproj", "{D2178D55-A0E6-435C-82C9-EA9E0E9FE45E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
