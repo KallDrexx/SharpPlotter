@@ -27,18 +27,19 @@ namespace SharpPlotter
             Clear();
         }
 
-        public void AddPoints(GraphPoint2d[] points, Color? color = null)
+        public void AddPoints((float x, float y)[] points, Color? color = null)
         {
-            points ??= Array.Empty<GraphPoint2d>();
+            points ??= Array.Empty<(float, float)>();
             
             foreach (var point in points)
             {
-                RecalculateMinMax(point.X, point.Y);
-                _points.Add(point);
+                RecalculateMinMax(point.x, point.y);
+                var graphPoint = new GraphPoint2d(point.x, point.y);
+                _points.Add(graphPoint);
                 
                 if (color != null)
                 {
-                    _colorMap.Add(point, color.Value);
+                    _colorMap.Add(graphPoint, color.Value);
                 }
             }
         }

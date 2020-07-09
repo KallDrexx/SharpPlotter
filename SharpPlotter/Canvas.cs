@@ -74,17 +74,17 @@ namespace SharpPlotter
             _dynamicGraphBounds = true;
         }
 
-        public void DrawPoints(params GraphPoint2d[] points)
+        public void DrawPoints(params (float x, float y)[] points)
         {
             _graphItems.AddPoints(points);
         }
 
-        public void DrawPoints(Color color, params GraphPoint2d[] points)
+        public void DrawPoints(Color color, params (float x, float y)[] points)
         {
             _graphItems.AddPoints(points, color);
         }
 
-        public void DrawPolygon(params GraphPoint2d[] points)
+        public void DrawPolygon(params (float x, float y)[] points)
         {
             if (points?.Any() != true)
             {
@@ -94,7 +94,7 @@ namespace SharpPlotter
             _graphItems.AddPath(new Path2d(points, true));
         }
         
-        public void DrawPolygon(Color color, params GraphPoint2d[] points)
+        public void DrawPolygon(Color color, params (float x, float y)[] points)
         {
             if (points?.Any() != true)
             {
@@ -104,7 +104,7 @@ namespace SharpPlotter
             _graphItems.AddPath(new Path2d(points, true), color);
         }
 
-        public void DrawSegments(params GraphPoint2d[] points)
+        public void DrawSegments(params (float x, float y)[] points)
         {
             if (points?.Any() != true)
             {
@@ -114,7 +114,7 @@ namespace SharpPlotter
             _graphItems.AddPath(new Path2d(points, false));
         }
         
-        public void DrawSegments(Color color, params GraphPoint2d[] points)
+        public void DrawSegments(Color color, params (float x, float y)[] points)
         {
             if (points?.Any() != true)
             {

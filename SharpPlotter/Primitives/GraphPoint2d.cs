@@ -10,7 +10,5 @@ namespace SharpPlotter.Primitives
             X = x;
             Y = y;
         }
-        
-        public static implicit operator GraphPoint2d((float x, float y) value) => new GraphPoint2d(value.x, value.y); 
     }
 }

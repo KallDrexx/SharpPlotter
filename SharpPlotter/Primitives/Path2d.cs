@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SharpPlotter.Primitives
 {
@@ -7,9 +8,9 @@ namespace SharpPlotter.Primitives
         public IReadOnlyList<GraphPoint2d> Points { get; }
         public bool ConnectEndToBeginning { get; }
 
-        public Path2d(GraphPoint2d[] points, bool connectEndToBeginning)
+        public Path2d((float x, float y)[] points, bool connectEndToBeginning)
         {
-            Points = points;
+            Points = points.Select(point => new GraphPoint2d(point.x, point.y)).ToArray();
             ConnectEndToBeginning = connectEndToBeginning;
         }
     }
