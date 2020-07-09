@@ -61,6 +61,7 @@ namespace SharpPlotter
         {
             _points.Clear();
             _paths.Clear();
+            _colorMap.Clear();
             MinX = float.MaxValue;
             MinY = float.MaxValue;
             MaxX = float.MinValue;

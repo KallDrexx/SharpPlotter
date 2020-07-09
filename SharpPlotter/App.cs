@@ -1,6 +1,6 @@
-﻿using System.Runtime.InteropServices;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
-using Microsoft.CodeAnalysis.Scripting;
+﻿using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -15,8 +15,10 @@ namespace SharpPlotter
 
         private readonly GraphicsDeviceManager _graphics;
         private readonly Canvas _canvas;
+        private readonly byte[] _rawCanvasPixels;
         private SpriteBatch _spriteBatch;
         private Texture2D _graphTexture;
+        private ScriptRunner _scriptRunner;
         private KeyboardState _currentKeyState;
         private KeyboardState _previousKeyState;
 
@@ -31,6 +33,10 @@ namespace SharpPlotter
 
             IsMouseVisible = true;
             _canvas = new Canvas(Width, Height);
+            
+            // Do a first render to get pixel data from the image for initial byte data allocation
+            using var image = _canvas.Render();
+            _rawCanvasPixels = new byte[image.Height * image.PeekPixels().RowBytes];
         }
 
         protected override void Initialize()
@@ -38,26 +44,9 @@ namespace SharpPlotter
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _currentKeyState = Keyboard.GetState();
 
-            var options = ScriptOptions.Default
-                .WithImports("System")
-                .WithReferences(typeof(GraphItems).Assembly)
-                .WithImports("SharpPlotter")
-                .WithImports("SharpPlotter.Primitives")
-                .WithReferences(typeof(Color).Assembly)
-                .WithImports("Microsoft.Xna.Framework");
-
-            var globals = new ScriptGlobals {Canvas = _canvas};
-
-            CSharpScript.RunAsync(@"
-            Canvas.SetGraphBounds(-10, 10, -10, 10);
-            Canvas.DrawPoints(Color.Green, (6,4), (3,1), (1,2), (-1,5), (-3,4), (-4,4), (-5,3), (-5,2), (-2,2),
-                (-5,1), (-4,0), (-2,1), (-1,0), (0, -3), (-1,-4), (1,-4), (2,-3), (1,-2), (3,-1), (5,1));
-            
-            Canvas.DrawPolygon(Color.Red, (6,4), (3,1), (1,2), (-1,5), (-3,4), (-4,4), (-5,3), (-5,2), (-2,2),
-                (-5,1), (-4,0), (-2,1), (-1,0), (0, -3), (-1,-4), (1,-4), (2,-3), (1,-2), (3,-1), (5,1));
-            
-            Canvas.DrawSegments((-1, -9), (-2, -8), (-3, -5));
-", options, globals).GetAwaiter().GetResult();
+            const string filename = @"c:\temp\test.cs";
+            _scriptRunner = new ScriptRunner(_canvas, filename);
+            Process.Start("cmd", $"/C code {filename}");
 
             base.Initialize();
         }
@@ -69,15 +58,16 @@ namespace SharpPlotter
             
             var requireReRender = HandleKeyboardInput();
 
+            if (_scriptRunner.CheckForChanges())
+            {
+                requireReRender = true;
+            }
+
             if (_graphTexture == null || requireReRender)
             {
                 using var image = _canvas.Render();
-                _graphTexture = RenderImageToTexture2D(image, GraphicsDevice);
+                RenderImageToTexture2D(image, GraphicsDevice);
             }
-            
-            
-            
-            
 
             base.Update(gameTime);
         }
@@ -93,17 +83,19 @@ namespace SharpPlotter
             base.Draw(gameTime);
         }
 
-        private static Texture2D RenderImageToTexture2D(SKImage image, GraphicsDevice graphicsDevice)
+        private void RenderImageToTexture2D(SKImage image, GraphicsDevice graphicsDevice)
         {
             var pixelMap = image.PeekPixels();
             var pointer = pixelMap.GetPixels();
-            var pixels = new byte[image.Height * pixelMap.RowBytes];
 
-            Marshal.Copy(pointer, pixels, 0, pixels.Length);
-            var texture = new Texture2D(graphicsDevice, image.Width, image.Height);
-            texture.SetData(pixels);
+            Marshal.Copy(pointer, _rawCanvasPixels, 0, _rawCanvasPixels.Length);
 
-            return texture;
+            if (_graphTexture == null)
+            {
+                _graphTexture = new Texture2D(graphicsDevice, image.Width, image.Height);
+            }
+            
+            _graphTexture.SetData(_rawCanvasPixels);
         }
 
         private bool HasBeenPressed(Keys key)
@@ -179,11 +171,6 @@ namespace SharpPlotter
             }
 
             return requireReRender;
-        }
-
-        public class ScriptGlobals
-        {
-            public Canvas Canvas { get; set; }
         }
     }
 }
