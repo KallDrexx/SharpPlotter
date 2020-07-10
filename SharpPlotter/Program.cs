@@ -1,4 +1,6 @@
-﻿namespace SharpPlotter
+﻿using SharpPlotter.MonoGame;
+
+namespace SharpPlotter
 {
     class Program
     {

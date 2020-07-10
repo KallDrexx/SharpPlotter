@@ -16,9 +16,11 @@ namespace SharpPlotter
         private readonly SKSurface _surface;
         private readonly int _horizontalLineCount, _verticalLineCount;
         private int _usableWidth, _usableHeight;
-        private float _pixelsPerXUnit, _pixelsPerYUnit, _zeroCanvasX, _zeroCanvasY;
+        private float _zeroCanvasX, _zeroCanvasY;
         private bool _dynamicGraphBounds = true;
         
+        public float PixelsPerXUnit { get; private set; }
+        public float PixelsPerYUnit { get; private set; }
         public int MinX { get; private set; }
         public int MaxX { get; private set; }
         public int MinY { get; private set; }
@@ -145,10 +147,10 @@ namespace SharpPlotter
             }
             
             _usableWidth = (int)(_width - LineMargin * 2.5);
-            _pixelsPerXUnit = (float)_usableWidth / (MaxX - MinX);
+            PixelsPerXUnit = (float)_usableWidth / (MaxX - MinX);
             
             _usableHeight = (int)(_height - LineMargin * 2.5);
-            _pixelsPerYUnit = (float) _usableHeight / (MaxY - MinY);
+            PixelsPerYUnit = (float) _usableHeight / (MaxY - MinY);
 
             _zeroCanvasX = GetCanvasX(0);
             _zeroCanvasY = GetCanvasY(0);
@@ -289,13 +291,13 @@ namespace SharpPlotter
         private float GetCanvasX(float value)
         {
             var numbersFromStart = value - MinX;
-            return LineMargin * 1.5f + _pixelsPerXUnit * numbersFromStart;
+            return LineMargin * 1.5f + PixelsPerXUnit * numbersFromStart;
         }
 
         private float GetCanvasY(float value)
         {
             var numbersFromStart = value - MinY;
-            return _height - LineMargin * 1.5f - _pixelsPerYUnit * numbersFromStart;
+            return _height - LineMargin * 1.5f - PixelsPerYUnit * numbersFromStart;
         }
     }
 }
