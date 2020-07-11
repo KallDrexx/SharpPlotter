@@ -1,7 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SharpPlotter.Primitives;
 using SharpPlotter.Rendering;
 using SkiaSharp;
 
@@ -13,9 +12,9 @@ namespace SharpPlotter.MonoGame
         private const int Height = 768;
 
         private readonly GraphicsDeviceManager _graphics;
-        private readonly Canvas _canvas;
         private readonly Camera _camera;
         private readonly byte[] _rawCanvasPixels;
+        private readonly Plot _plot;
         private SpriteBatch _spriteBatch;
         private Texture2D _graphTexture;
         private ScriptRunner _scriptRunner;
@@ -31,8 +30,8 @@ namespace SharpPlotter.MonoGame
             };
 
             IsMouseVisible = true;
-            _canvas = new Canvas(Width, Height);
             _camera = new Camera(Width, Height);
+            _plot = new Plot();
 
             // Do a first render to get pixel data from the image for initial byte data allocation
             using var image = _camera.Render(null, null);
@@ -47,6 +46,9 @@ namespace SharpPlotter.MonoGame
             // const string filename = @"c:\temp\test.cs";
             // _scriptRunner = new ScriptRunner(_canvas, filename);
             // Process.Start("cmd", $"/C code {filename}");
+            
+            _plot.Points(Color.Red, (1, 1), (-1, 1), (-1, -1), (1, -1));
+            _plot.Segments(Color.Yellow, (1, 1), (-1, 1), (-1, -1), (1, -1), (1, 1));
 
             base.Initialize();
         }
@@ -62,23 +64,7 @@ namespace SharpPlotter.MonoGame
             //
             if (_graphTexture == null || requireReRender)
             {
-                var points = new[]
-                {
-                    new RenderedPoint(new Point2d(1, 1), Color.Red),
-                    new RenderedPoint(new Point2d(-1, 1), Color.Blue),
-                    new RenderedPoint(new Point2d(-1, -1), Color.Green),
-                    new RenderedPoint(new Point2d(1, -1), Color.White),
-                };
-
-                var segments = new[]
-                {
-                    new RenderedSegment(new Point2d(1, 1), new Point2d(-1, 1), Color.Red),
-                    new RenderedSegment(new Point2d(-1, 1), new Point2d(-1, -1), Color.Blue),
-                    new RenderedSegment(new Point2d(-1, -1), new Point2d(1, -1), Color.Green),
-                    new RenderedSegment(new Point2d(1, -1), new Point2d(1, 1), Color.White),
-                };
-                
-                using var image = _camera.Render(points, segments);
+                using var image = _camera.Render(_plot.PointsToRender, _plot.SegmentsToRender);
                 RenderImageToTexture2D(image, GraphicsDevice);
             }
 

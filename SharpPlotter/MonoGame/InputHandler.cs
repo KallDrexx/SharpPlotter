@@ -1,6 +1,5 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using SharpPlotter.Primitives;
 using SharpPlotter.Rendering;
 
 namespace SharpPlotter.MonoGame

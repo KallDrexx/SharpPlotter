@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-using SharpPlotter.Primitives;
 
 namespace SharpPlotter.Rendering
 {

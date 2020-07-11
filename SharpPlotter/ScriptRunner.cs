@@ -15,9 +15,8 @@ namespace SharpPlotter
         private readonly FileSystemWatcher _watcher;
         private readonly ScriptOptions _scriptOptions;
         private readonly ScriptGlobals _scriptGlobals;
-        private readonly Canvas _canvas;
 
-        public ScriptRunner(Canvas canvas, string scriptFile)
+        public ScriptRunner(string scriptFile)
         {
             if (!Directory.Exists(Path.GetDirectoryName(scriptFile)))
             {
@@ -30,8 +29,7 @@ namespace SharpPlotter
                 {
                 }
             }
-
-            _canvas = canvas;
+            
             _watcher = new FileSystemWatcher
             {
                 Path = Path.GetDirectoryName(scriptFile), 
@@ -47,16 +45,12 @@ namespace SharpPlotter
                 .WithImports("System.Collections.Generic")
                 .WithImports("System.Linq")
                 .WithReferences(typeof(Enumerable).Assembly)
-                .WithReferences(typeof(GraphItems).Assembly)
                 .WithImports("SharpPlotter")
                 .WithImports("SharpPlotter.Primitives")
                 .WithReferences(typeof(Color).Assembly)
                 .WithImports("Microsoft.Xna.Framework");
 
-            _scriptGlobals = new ScriptGlobals
-            {
-                Canvas = canvas,
-            };
+            _scriptGlobals = new ScriptGlobals();
         }
 
         public bool CheckForChanges()
@@ -75,7 +69,6 @@ namespace SharpPlotter
 
             try
             {
-                _canvas.Clear();
                 CSharpScript.RunAsync(newScript, _scriptOptions, _scriptGlobals).GetAwaiter().GetResult();
             }
             catch (Exception exception)
@@ -123,7 +116,6 @@ namespace SharpPlotter
         // Must be public due to roslyn constraints
         public class ScriptGlobals
         {
-            public Canvas Canvas { get; set; }
         }
     }
 }

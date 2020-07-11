@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using SharpPlotter.Primitives;
 using SkiaSharp;
 
 namespace SharpPlotter.Rendering
