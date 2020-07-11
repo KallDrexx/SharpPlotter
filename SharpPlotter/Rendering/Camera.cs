@@ -69,8 +69,13 @@ namespace SharpPlotter.Rendering
 
         public SKImage Render(IReadOnlyList<RenderedPoint> points, IReadOnlyList<RenderedSegment> segments)
         {
+            points ??= Array.Empty<RenderedPoint>();
+            segments ??= Array.Empty<RenderedSegment>();
+            
             _surface.Canvas.Clear(SKColors.Black);
             RenderGridLines();
+            RenderSegments(segments);
+            RenderPoints(points);
             
             return _surface.Snapshot();
         }
@@ -89,6 +94,35 @@ namespace SharpPlotter.Rendering
             DrawXAxisLineAt(0, importantLinePaint, labelPaint, true);
             DrawYAxisGraphLines(standardLinePaint, labelPaint);
             DrawYAxisLineAt(0, importantLinePaint, labelPaint, true);
+        }
+
+        private void RenderPoints(IEnumerable<RenderedPoint> points)
+        {
+            foreach (var point in points)
+            {
+                var x = GetPixelXForGraphValue((int) point.Point.X);
+                var y = GetPixelYForGraphValue((int) point.Point.Y);
+                var color = new SKColor(point.Color.R, point.Color.G, point.Color.B);
+                
+                _surface.Canvas.DrawCircle(x, y, 5, new SKPaint{Color = color});
+            }
+        }
+
+        private void RenderSegments(IEnumerable<RenderedSegment> segments)
+        {
+            foreach (var segment in segments)
+            {
+                var startX = GetPixelXForGraphValue((int) segment.Start.X);
+                var startY = GetPixelYForGraphValue((int) segment.Start.Y);
+                var endX = GetPixelXForGraphValue((int) segment.End.X);
+                var endY = GetPixelYForGraphValue((int) segment.End.Y);
+                
+                var start = new SKPoint(startX, startY);
+                var end = new SKPoint(endX, endY);
+                var color = new SKColor(segment.Color.R, segment.Color.G, segment.Color.B);
+                
+                _surface.Canvas.DrawLine(start, end, new SKPaint{Color = color});
+            }
         }
 
         private void DrawXAxisGraphLines(SKPaint linePaint, SKPaint labelPaint)

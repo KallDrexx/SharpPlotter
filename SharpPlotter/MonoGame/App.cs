@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SharpPlotter.Primitives;
 using SharpPlotter.Rendering;
 using SkiaSharp;
 
@@ -61,7 +62,23 @@ namespace SharpPlotter.MonoGame
             //
             if (_graphTexture == null || requireReRender)
             {
-                using var image = _camera.Render(null, null);
+                var points = new[]
+                {
+                    new RenderedPoint(new Point2d(1, 1), Color.Red),
+                    new RenderedPoint(new Point2d(-1, 1), Color.Blue),
+                    new RenderedPoint(new Point2d(-1, -1), Color.Green),
+                    new RenderedPoint(new Point2d(1, -1), Color.White),
+                };
+
+                var segments = new[]
+                {
+                    new RenderedSegment(new Point2d(1, 1), new Point2d(-1, 1), Color.Red),
+                    new RenderedSegment(new Point2d(-1, 1), new Point2d(-1, -1), Color.Blue),
+                    new RenderedSegment(new Point2d(-1, -1), new Point2d(1, -1), Color.Green),
+                    new RenderedSegment(new Point2d(1, -1), new Point2d(1, 1), Color.White),
+                };
+                
+                using var image = _camera.Render(points, segments);
                 RenderImageToTexture2D(image, GraphicsDevice);
             }
 
