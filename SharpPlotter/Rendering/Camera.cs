@@ -26,17 +26,41 @@ namespace SharpPlotter.Rendering
         private readonly SKSurface _surface;
         private readonly int _width, _height, _usableWidth, _usableHeight;
         private readonly int _basePixelsPerXUnit, _basePixelsPerYUnit;
-        
+        private Point2d _origin;
+        private float _zoomFactor;
+
         /// <summary>
         /// The X/Y coordinates on the graph the camera is centered on
         /// </summary>
-        public Point2d Origin { get; set; }
-        
+        public Point2d Origin
+        {
+            get => _origin;
+            set
+            {
+                _origin = value;
+                CameraHasMoved = true;
+            }
+        }
+
         /// <summary>
         /// How zoomed in or out the camera should be. 1 designates that it is not zoomed in or out at all, values
         /// greater than 1 are zoomed in while numbers less than 1 are zoomed out.
         /// </summary>
-        public float ZoomFactor { get; set; }
+        public float ZoomFactor
+        {
+            get => _zoomFactor;
+            set
+            {
+                _zoomFactor = value;
+                CameraHasMoved = true;
+            }
+        }
+        
+        /// <summary>
+        /// If true than that means the camera is either in a new position or the zoom factor has changed.  This helps
+        /// know if the view should be re-rendered or not.
+        /// </summary>
+        public bool CameraHasMoved { get; private set; }
 
         public Camera(int width, int height)
         {
@@ -75,6 +99,8 @@ namespace SharpPlotter.Rendering
             RenderGridLines();
             RenderSegments(segments);
             RenderPoints(points);
+
+            CameraHasMoved = false;
             
             return _surface.Snapshot();
         }

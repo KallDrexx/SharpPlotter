@@ -6,13 +6,16 @@ using SharpPlotter.Rendering;
 
 namespace SharpPlotter
 {
-    public class Plot
+    public class GraphedItems
     {
         private readonly List<RenderedPoint> _points = new List<RenderedPoint>();
         private readonly List<RenderedSegment> _segments = new List<RenderedSegment>();
-
-        public IReadOnlyList<RenderedPoint> PointsToRender => _points;
-        public IReadOnlyList<RenderedSegment> SegmentsToRender => _segments;
+        
+        /// <summary>
+        /// Returns true if any changes have been made to any collection of graph-able items.  This resets any time
+        /// the list of items to render is retrieved.
+        /// </summary>
+        public bool ItemsChangedSinceLastRender { get; private set; }
 
         /// <summary>
         /// Clear all items from the graph
@@ -21,6 +24,8 @@ namespace SharpPlotter
         {
             _points.Clear();
             _segments.Clear();
+
+            ItemsChangedSinceLastRender = true;
         }
 
         /// <summary>
@@ -41,6 +46,8 @@ namespace SharpPlotter
             {
                 _points.Add(new RenderedPoint(new Point2d(x, y), Color.White));
             }
+            
+            ItemsChangedSinceLastRender = true;
         }
 
         /// <summary>
@@ -70,6 +77,8 @@ namespace SharpPlotter
                 
                 _points.Add(new RenderedPoint(new Point2d(point[0], point[1]), color));
             }
+            
+            ItemsChangedSinceLastRender = true;
         }
         
         /// <summary>
@@ -101,6 +110,8 @@ namespace SharpPlotter
 
                 lastPoint = point;
             }
+            
+            ItemsChangedSinceLastRender = true;
         }
 
         /// <summary>
@@ -141,6 +152,17 @@ namespace SharpPlotter
                 
                 lastPoint = point;
             }
+            
+            ItemsChangedSinceLastRender = true;
+        }
+        
+        /// <summary>
+        /// Provides the list of items that should be rendered.  This will reset `ItemsChangedSinceLastRender`
+        /// </summary>
+        internal ItemsToRender GetItemsToRender()
+        {
+            ItemsChangedSinceLastRender = false;
+            return new ItemsToRender(_points, _segments);
         }
     }
 }

@@ -10,11 +10,10 @@ namespace SharpPlotter.MonoGame
     {
         private const int Width = 1024;
         private const int Height = 768;
-
-        private readonly GraphicsDeviceManager _graphics;
+        
         private readonly Camera _camera;
         private readonly byte[] _rawCanvasPixels;
-        private readonly Plot _plot;
+        private readonly GraphedItems _graphedItems;
         private SpriteBatch _spriteBatch;
         private Texture2D _graphTexture;
         private ScriptRunner _scriptRunner;
@@ -22,7 +21,8 @@ namespace SharpPlotter.MonoGame
 
         public App()
         {
-            _graphics = new GraphicsDeviceManager(this)
+            // ReSharper disable once ObjectCreationAsStatement
+            new GraphicsDeviceManager(this)
             {
                 PreferredBackBufferWidth = Width, 
                 PreferredBackBufferHeight = Height,
@@ -31,7 +31,7 @@ namespace SharpPlotter.MonoGame
 
             IsMouseVisible = true;
             _camera = new Camera(Width, Height);
-            _plot = new Plot();
+            _graphedItems = new GraphedItems();
 
             // Do a first render to get pixel data from the image for initial byte data allocation
             using var image = _camera.Render(null, null);
@@ -47,26 +47,15 @@ namespace SharpPlotter.MonoGame
             // _scriptRunner = new ScriptRunner(_canvas, filename);
             // Process.Start("cmd", $"/C code {filename}");
             
-            _plot.Points(Color.Red, (1, 1), (-1, 1), (-1, -1), (1, -1));
-            _plot.Segments(Color.Yellow, (1, 1), (-1, 1), (-1, -1), (1, -1), (1, 1));
+            _graphedItems.Points(Color.Red, (1, 1), (-1, 1), (-1, -1), (1, -1));
+            _graphedItems.Segments(Color.Yellow, (1, 1), (-1, 1), (-1, -1), (1, -1), (1, 1));
 
             base.Initialize();
         }
 
         protected override void Update(GameTime gameTime)
         {
-            var requireReRender = _inputHandler.Update(gameTime);
-
-            // if (_scriptRunner.CheckForChanges())
-            // {
-            //     requireReRender = true;
-            // }
-            //
-            if (_graphTexture == null || requireReRender)
-            {
-                using var image = _camera.Render(_plot.PointsToRender, _plot.SegmentsToRender);
-                RenderImageToTexture2D(image, GraphicsDevice);
-            }
+            _inputHandler.Update(gameTime);
 
             base.Update(gameTime);
         }
@@ -74,6 +63,13 @@ namespace SharpPlotter.MonoGame
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
+            
+            if (_graphTexture == null || _camera.CameraHasMoved || _graphedItems.ItemsChangedSinceLastRender)
+            {
+                var itemsToRender = _graphedItems.GetItemsToRender();
+                using var image = _camera.Render(itemsToRender.Points, itemsToRender.Segments);
+                RenderImageToTexture2D(image, GraphicsDevice);
+            }
             
             _spriteBatch.Begin();
             _spriteBatch.Draw(_graphTexture, Vector2.Zero, Color.White);
@@ -89,11 +85,7 @@ namespace SharpPlotter.MonoGame
 
             Marshal.Copy(pointer, _rawCanvasPixels, 0, _rawCanvasPixels.Length);
 
-            if (_graphTexture == null)
-            {
-                _graphTexture = new Texture2D(graphicsDevice, image.Width, image.Height);
-            }
-            
+            _graphTexture ??= new Texture2D(graphicsDevice, image.Width, image.Height);
             _graphTexture.SetData(_rawCanvasPixels);
         }
     }
