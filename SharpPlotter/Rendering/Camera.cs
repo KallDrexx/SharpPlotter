@@ -51,8 +51,13 @@ namespace SharpPlotter.Rendering
             get => _zoomFactor;
             set
             {
-                _zoomFactor = value;
-                CameraHasMoved = true;
+                // Don't allow negative or zero zoom values, as that that doesn't make sense
+                // and messes up the calculations.
+                if (value > 0)
+                {
+                    _zoomFactor = value;
+                    CameraHasMoved = true;
+                }
             }
         }
         

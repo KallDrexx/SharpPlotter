@@ -79,14 +79,13 @@ namespace SharpPlotter.MonoGame
 
         private void HandleMouseInput()
         {
-            const int scrollValueDivider = 10;
-            
             var scrollChange = _currentMouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue;
-            scrollChange /= scrollValueDivider;
-            
             if (scrollChange != 0)
             {
-                // tood: add scroll support
+                const float scrollZoomModifier = 1.2f;
+                _camera.ZoomFactor = scrollChange > 0
+                    ? _camera.ZoomFactor * scrollZoomModifier
+                    : _camera.ZoomFactor / scrollZoomModifier;
             }
 
             var positionChange = _currentMouseState.Position - _previousMouseState.Position;
