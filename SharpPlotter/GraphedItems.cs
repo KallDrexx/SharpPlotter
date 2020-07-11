@@ -44,7 +44,7 @@ namespace SharpPlotter
             points ??= Array.Empty<(float, float)>();
             foreach (var (x, y) in points)
             {
-                _points.Add(new RenderedPoint(new Point2d(x, y), Color.White));
+                _points.Add(new RenderedPoint(new Point2d(x, y), color));
             }
             
             ItemsChangedSinceLastRender = true;
