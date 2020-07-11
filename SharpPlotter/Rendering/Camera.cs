@@ -23,9 +23,15 @@ namespace SharpPlotter.Rendering
         /// </summary>
         private const int ZeroAxisClearance = 20;
 
+        /// <summary>
+        /// How many pixels a whole graph unit takes up by default on any given axis.  Used primarily for resetting
+        /// the aspect ratio on the graph.
+        /// </summary>
+        private const int StandardPixelsPerGraphUnit = 90;
+
         private readonly SKSurface _surface;
         private readonly int _width, _height, _usableWidth, _usableHeight;
-        private readonly int _basePixelsPerXUnit, _basePixelsPerYUnit;
+        private int _basePixelsPerXUnit, _basePixelsPerYUnit;
         private Point2d _origin;
         private float _zoomFactor;
 
@@ -77,8 +83,8 @@ namespace SharpPlotter.Rendering
             var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
             _surface = SKSurface.Create(info);
 
-            _basePixelsPerXUnit = 90;
-            _basePixelsPerYUnit = 90;
+            _basePixelsPerXUnit = StandardPixelsPerGraphUnit;
+            _basePixelsPerYUnit = StandardPixelsPerGraphUnit;
             
             Origin = new Point2d(0, 0);
             ZoomFactor = 1f;
@@ -93,6 +99,55 @@ namespace SharpPlotter.Rendering
             var verticalUnits = y / (_basePixelsPerYUnit * ZoomFactor);
             
             Origin = new Point2d(Origin.X + horizontalUnits, Origin.Y + verticalUnits);
+        }
+
+        /// <summary>
+        /// Allows adjusting how many graph coordinates are viewable on a horizontal or vertical basis, instead of
+        /// forcing the graph to always be locked in a specific aspect ratio.  A positive change value effectively
+        /// increases the field of view and allows more values to be visible
+        /// </summary>
+        public void ChangeFieldOfView(int horizontalChange, int verticalChange)
+        {
+            _basePixelsPerXUnit -= horizontalChange;
+            _basePixelsPerYUnit -= verticalChange;
+
+            if (_basePixelsPerXUnit < 1) _basePixelsPerXUnit = 1;
+            if (_basePixelsPerYUnit < 1) _basePixelsPerYUnit = 1;
+
+            CameraHasMoved = true;
+        }
+
+        /// <summary>
+        /// Resets the field of view values to match the default aspect ratio and values
+        /// </summary>
+        public void ResetFieldOfView()
+        {
+            _basePixelsPerXUnit = StandardPixelsPerGraphUnit;
+            _basePixelsPerYUnit = StandardPixelsPerGraphUnit;
+
+            CameraHasMoved = true;
+        }
+
+        /// <summary>
+        /// Sets the camera to a predefined position and field of view that guarantees all 4 edges of the screen
+        /// represent the defined boundary points on the graph
+        /// </summary>
+        public void SetGraphBounds((int min, int max) x, (int min, int max) y)
+        {
+            if (x.min >= x.max || y.min >= x.max)
+            {
+                var message = $"Invalid graph boundaries specified: X={x.min}/{x.max}, y={y.min}/{y.max}";
+                throw new ArgumentException(message);
+            }
+
+            _basePixelsPerXUnit = _usableWidth / (x.max - x.min);
+            _basePixelsPerYUnit = _usableHeight / (y.max - y.min);
+
+            var originX = x.max - (x.max - x.min) / 2;
+            var originY = y.max - (y.max - y.min) / 2;
+            Origin = new Point2d(originX, originY);
+
+            CameraHasMoved = true;
         }
 
         public SKImage Render(IReadOnlyList<RenderedPoint> points, IReadOnlyList<RenderedSegment> segments)

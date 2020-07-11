@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Linq;
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SharpPlotter.Rendering;
@@ -46,9 +48,15 @@ namespace SharpPlotter.MonoGame
             // const string filename = @"c:\temp\test.cs";
             // _scriptRunner = new ScriptRunner(_canvas, filename);
             // Process.Start("cmd", $"/C code {filename}");
+
+            var points = Enumerable.Range(-10, 21)
+                .Select(x => ((float) x, (float) Math.Pow(x, 2)))
+                .ToArray();
             
-            _graphedItems.Points(Color.Red, (1, 1), (-1, 1), (-1, -1), (1, -1));
-            _graphedItems.Segments(Color.Yellow, (1, 1), (-1, 1), (-1, -1), (1, -1), (1, 1));
+            _graphedItems.Points(Color.Red, points);
+            _graphedItems.Segments(Color.Yellow, points);
+            
+            _camera.SetGraphBounds((-10, 10), (-1, 100));
 
             base.Initialize();
         }

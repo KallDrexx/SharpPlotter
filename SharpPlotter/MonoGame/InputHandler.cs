@@ -7,6 +7,7 @@ namespace SharpPlotter.MonoGame
     public class InputHandler
     {
         private const int PixelsPannedPerSecond = 360;
+        private const int FovChangePerSecond = 100;
         
         private readonly Camera _camera;
         private KeyboardState _previousKeyState, _currentKeyState;
@@ -70,10 +71,35 @@ namespace SharpPlotter.MonoGame
                 _camera.MoveByPixelAmount(changeInX, 0);
             }
 
+            if (_currentKeyState.IsKeyDown(Keys.Insert))
+            {
+                var changeInX = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                _camera.ChangeFieldOfView(changeInX, 0);
+            }
+            
+            if (_currentKeyState.IsKeyDown(Keys.Delete))
+            {
+                var changeInX = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                _camera.ChangeFieldOfView(-changeInX, 0);
+            }
+            
+            if (_currentKeyState.IsKeyDown(Keys.Home))
+            {
+                var changeInY = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                _camera.ChangeFieldOfView(0, changeInY);
+            }
+            
+            if (_currentKeyState.IsKeyDown(Keys.End))
+            {
+                var changeInY = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                _camera.ChangeFieldOfView(0, -changeInY);
+            }
+
             if (HasBeenPressed(Keys.Back))
             {
                 _camera.Origin = new Point2d(0, 0);
                 _camera.ZoomFactor = 1f;
+                _camera.ResetFieldOfView();
             }
         }
 
