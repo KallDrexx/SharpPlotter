@@ -10,12 +10,14 @@ namespace SharpPlotter.MonoGame
         private const int FovChangePerSecond = 100;
         
         private readonly Camera _camera;
+        private readonly PlotterUi _plotterUi;
         private KeyboardState _previousKeyState, _currentKeyState;
         private MouseState _previousMouseState, _currentMouseState;
 
-        public InputHandler(Camera camera)
+        public InputHandler(Camera camera, PlotterUi plotterUi)
         {
             _camera = camera;
+            _plotterUi = plotterUi;
             
             _currentKeyState = Keyboard.GetState();
             _currentMouseState = Mouse.GetState();
@@ -37,89 +39,111 @@ namespace SharpPlotter.MonoGame
 
         private void HandleKeyboardInput(GameTime gameTime)
         {
-            if (HasBeenPressed(Keys.PageDown))
+            if (HasBeenPressed(Keys.F12))
             {
-                _camera.ZoomFactor *= 2;
+                _plotterUi.ToggleImGuiDemoWindow();
             }
 
-            if (HasBeenPressed(Keys.PageUp))
+            // Camera actions should only be taken if UI elements do not have keyboard focus
+            if (!_plotterUi.AcceptingKeyboardInput)
             {
-                _camera.ZoomFactor /= 2;
-            }
+                if (HasBeenPressed(Keys.PageDown))
+                {
+                    _camera.ZoomFactor *= 2;
+                }
 
-            if (_currentKeyState.IsKeyDown(Keys.Up))
-            {
-                var changeInY = (int)(PixelsPannedPerSecond * gameTime.ElapsedGameTime.TotalSeconds);
-                _camera.MoveByPixelAmount(0, changeInY);
-            }
+                if (HasBeenPressed(Keys.PageUp))
+                {
+                    _camera.ZoomFactor /= 2;
+                }
 
-            if (_currentKeyState.IsKeyDown(Keys.Down))
-            {
-                var changeInY = (int)(PixelsPannedPerSecond * gameTime.ElapsedGameTime.TotalSeconds);
-                _camera.MoveByPixelAmount(0, -changeInY);
-            }
+                if (_currentKeyState.IsKeyDown(Keys.Up))
+                {
+                    var changeInY = (int) (PixelsPannedPerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                    _camera.MoveByPixelAmount(0, changeInY);
+                }
 
-            if (_currentKeyState.IsKeyDown(Keys.Left))
-            {
-                var changeInX = (int)(PixelsPannedPerSecond * gameTime.ElapsedGameTime.TotalSeconds);
-                _camera.MoveByPixelAmount(-changeInX, 0);
-            }
+                if (_currentKeyState.IsKeyDown(Keys.Down))
+                {
+                    var changeInY = (int) (PixelsPannedPerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                    _camera.MoveByPixelAmount(0, -changeInY);
+                }
 
-            if (_currentKeyState.IsKeyDown(Keys.Right))
-            {
-                var changeInX = (int)(PixelsPannedPerSecond * gameTime.ElapsedGameTime.TotalSeconds);
-                _camera.MoveByPixelAmount(changeInX, 0);
-            }
+                if (_currentKeyState.IsKeyDown(Keys.Left))
+                {
+                    var changeInX = (int) (PixelsPannedPerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                    _camera.MoveByPixelAmount(-changeInX, 0);
+                }
 
-            if (_currentKeyState.IsKeyDown(Keys.Insert))
-            {
-                var changeInX = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
-                _camera.ChangeFieldOfView(changeInX, 0);
-            }
-            
-            if (_currentKeyState.IsKeyDown(Keys.Delete))
-            {
-                var changeInX = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
-                _camera.ChangeFieldOfView(-changeInX, 0);
-            }
-            
-            if (_currentKeyState.IsKeyDown(Keys.Home))
-            {
-                var changeInY = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
-                _camera.ChangeFieldOfView(0, changeInY);
-            }
-            
-            if (_currentKeyState.IsKeyDown(Keys.End))
-            {
-                var changeInY = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
-                _camera.ChangeFieldOfView(0, -changeInY);
-            }
+                if (_currentKeyState.IsKeyDown(Keys.Right))
+                {
+                    var changeInX = (int) (PixelsPannedPerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                    _camera.MoveByPixelAmount(changeInX, 0);
+                }
 
-            if (HasBeenPressed(Keys.Back))
-            {
-                _camera.Origin = new Point2d(0, 0);
-                _camera.ZoomFactor = 1f;
-                _camera.ResetFieldOfView();
+                if (_currentKeyState.IsKeyDown(Keys.Insert))
+                {
+                    var changeInX = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                    _camera.ChangeFieldOfView(changeInX, 0);
+                }
+
+                if (_currentKeyState.IsKeyDown(Keys.Delete))
+                {
+                    var changeInX = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                    _camera.ChangeFieldOfView(-changeInX, 0);
+                }
+
+                if (_currentKeyState.IsKeyDown(Keys.Home))
+                {
+                    var changeInY = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                    _camera.ChangeFieldOfView(0, changeInY);
+                }
+
+                if (_currentKeyState.IsKeyDown(Keys.End))
+                {
+                    var changeInY = (int) (FovChangePerSecond * gameTime.ElapsedGameTime.TotalSeconds);
+                    _camera.ChangeFieldOfView(0, -changeInY);
+                }
+
+                if (HasBeenPressed(Keys.Back))
+                {
+                    _camera.Origin = new Point2d(0, 0);
+                    _camera.ZoomFactor = 1f;
+                    _camera.ResetFieldOfView();
+                }
             }
         }
 
         private void HandleMouseInput()
         {
-            var scrollChange = _currentMouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue;
-            if (scrollChange != 0)
+            // Only react to mouse movements if the UI elements do not have mouse focus
+            if (_plotterUi.AcceptingMouseInput)
             {
-                const float scrollZoomModifier = 1.2f;
-                _camera.ZoomFactor = scrollChange > 0
-                    ? _camera.ZoomFactor * scrollZoomModifier
-                    : _camera.ZoomFactor / scrollZoomModifier;
+                // Mouse is on ImGui, so no graph coordinates required
+                _plotterUi.AppToolbar.MousePointerGraphLocation = null;
             }
-
-            var positionChange = _currentMouseState.Position - _previousMouseState.Position;
-            if (_previousMouseState.LeftButton == ButtonState.Pressed && 
-                _currentMouseState.LeftButton == ButtonState.Pressed && 
-                positionChange != Point.Zero)
+            else
             {
-                _camera.MoveByPixelAmount(-positionChange.X, positionChange.Y);
+                var (mouseX, mouseY) = _currentMouseState.Position;
+                var graphCoordsAtMouse = _camera.GetGraphPointForPixelCoordinates(mouseX, mouseY);
+                _plotterUi.AppToolbar.MousePointerGraphLocation = graphCoordsAtMouse;
+                
+                var scrollChange = _currentMouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue;
+                if (scrollChange != 0)
+                {
+                    const float scrollZoomModifier = 1.2f;
+                    _camera.ZoomFactor = scrollChange > 0
+                        ? _camera.ZoomFactor * scrollZoomModifier
+                        : _camera.ZoomFactor / scrollZoomModifier;
+                }
+
+                var positionChange = _currentMouseState.Position - _previousMouseState.Position;
+                if (_previousMouseState.LeftButton == ButtonState.Pressed && 
+                    _currentMouseState.LeftButton == ButtonState.Pressed && 
+                    positionChange != Point.Zero)
+                {
+                    _camera.MoveByPixelAmount(-positionChange.X, positionChange.Y);
+                }
             }
         }
 

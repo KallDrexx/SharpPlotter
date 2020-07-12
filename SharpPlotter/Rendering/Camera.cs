@@ -150,6 +150,33 @@ namespace SharpPlotter.Rendering
             CameraHasMoved = true;
         }
 
+        /// <summary>
+        /// Returns the X/Y point on the grid for a specific pixel coordinates.  Will return null if the pixel
+        /// coordinates refer to a part of the graph that's off screen
+        /// </summary>
+        public Point2d? GetGraphPointForPixelCoordinates(int x, int y)
+        {
+            if (x < GridLineMargin || 
+                y < GridLineMargin || 
+                x > _usableWidth + GridLineMargin || 
+                y > _usableHeight + GridLineMargin)
+            {
+                // Off screen
+                return null;
+            }
+
+            var horizontalPixelsFromCenter = x - _width / 2;
+            var verticalPixelsFromCenter = y - _height / 2;
+            
+            var horizontalUnitsPerPixel = _basePixelsPerXUnit * ZoomFactor;
+            var verticalUnitsPerPixel = _basePixelsPerYUnit * ZoomFactor;
+
+            var gridX = Origin.X + horizontalPixelsFromCenter / horizontalUnitsPerPixel;
+            var gridY = Origin.Y - verticalPixelsFromCenter / verticalUnitsPerPixel;
+            
+            return new Point2d(gridX, gridY);
+        }
+
         public SKImage Render(IReadOnlyList<RenderedPoint> points, IReadOnlyList<RenderedSegment> segments)
         {
             points ??= Array.Empty<RenderedPoint>();

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using ImGuiHandler;
+using ImGuiHandler.MonoGame;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SharpPlotter.Rendering;
@@ -20,6 +22,7 @@ namespace SharpPlotter.MonoGame
         private Texture2D _graphTexture;
         private ScriptRunner _scriptRunner;
         private InputHandler _inputHandler;
+        private PlotterUi _plotterUi;
 
         public App()
         {
@@ -42,8 +45,9 @@ namespace SharpPlotter.MonoGame
 
         protected override void Initialize()
         {
+            _plotterUi = new PlotterUi(this);
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            _inputHandler = new InputHandler(_camera);
+            _inputHandler = new InputHandler(_camera, _plotterUi);
 
             // const string filename = @"c:\temp\test.cs";
             // _scriptRunner = new ScriptRunner(_canvas, filename);
@@ -82,6 +86,8 @@ namespace SharpPlotter.MonoGame
             _spriteBatch.Begin();
             _spriteBatch.Draw(_graphTexture, Vector2.Zero, Color.White);
             _spriteBatch.End();
+            
+            _plotterUi.Draw(gameTime.ElapsedGameTime);
             
             base.Draw(gameTime);
         }
