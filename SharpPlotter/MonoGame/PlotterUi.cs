@@ -10,13 +10,13 @@ namespace SharpPlotter.MonoGame
     {
         private readonly ImGuiManager _imGuiManager;
         private readonly ImGuiDemoWindow _imGuiDemoWindow;
-        
+
         public AppToolbar AppToolbar { get; }
 
         public bool AcceptingKeyboardInput => _imGuiManager.AcceptingKeyboardInput;
         public bool AcceptingMouseInput => _imGuiManager.AcceptingMouseInput;
 
-        public PlotterUi(Game game)
+        public PlotterUi(Game game, AppSettings appSettings)
         {
             var renderer = new MonoGameImGuiRenderer(game);
             renderer.Initialize();
@@ -28,6 +28,23 @@ namespace SharpPlotter.MonoGame
             
             AppToolbar = new AppToolbar{IsVisible = true};
             _imGuiManager.AddElement(AppToolbar);
+            
+            var settingsWindow = new SettingsWindow(appSettings);
+            _imGuiManager.AddElement(settingsWindow);
+            settingsWindow.SaveChangesRequested += (sender, e) =>
+            {
+                appSettings.ScriptFolderPath = settingsWindow.ScriptFolderPath;
+                appSettings.TextEditorExecutable = settingsWindow.TextEditorExecutable;
+                SettingsIo.Save(appSettings);
+
+                settingsWindow.IsVisible = false;
+            };
+
+            AppToolbar.SettingsClicked += (sender, e) =>
+            {
+                settingsWindow.ResetSettings(appSettings);
+                settingsWindow.IsVisible = true;
+            };
         }
 
         public void Draw(TimeSpan timeSinceLastFrame)

@@ -1,8 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using ImGuiHandler;
-using ImGuiHandler.MonoGame;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SharpPlotter.Rendering;
@@ -23,6 +22,7 @@ namespace SharpPlotter.MonoGame
         private ScriptRunner _scriptRunner;
         private InputHandler _inputHandler;
         private PlotterUi _plotterUi;
+        private AppSettings _appSettings;
 
         public App()
         {
@@ -41,11 +41,17 @@ namespace SharpPlotter.MonoGame
             // Do a first render to get pixel data from the image for initial byte data allocation
             using var image = _camera.Render(null, null);
             _rawCanvasPixels = new byte[image.Height * image.PeekPixels().RowBytes];
+
+            _appSettings = SettingsIo.Load() ?? new AppSettings
+            {
+                ScriptFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "SharpPlotter"),
+                TextEditorExecutable = "code",
+            };
         }
 
         protected override void Initialize()
         {
-            _plotterUi = new PlotterUi(this);
+            _plotterUi = new PlotterUi(this, _appSettings);
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _inputHandler = new InputHandler(_camera, _plotterUi);
 

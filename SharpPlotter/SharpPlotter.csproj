@@ -6,9 +6,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="ImGuiHandler.MonoGame" Version="1.0.0-preview2" />
+      <PackageReference Include="ImGuiHandler.MonoGame" Version="1.0.0-preview4" />
       <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.6.0" />
       <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1375-develop" />
+      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
       <PackageReference Include="SkiaSharp" Version="2.80.0-preview.33" />
     </ItemGroup>
 

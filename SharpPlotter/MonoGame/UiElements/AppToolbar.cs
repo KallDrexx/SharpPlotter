@@ -18,11 +18,13 @@ namespace SharpPlotter.MonoGame.UiElements
             {
                 if (ImGui.BeginMenu("File"))
                 {
-                    ImGui.MenuItem("New");
-                    ImGui.MenuItem("Open");
-                    ImGui.Separator();
-                    ImGui.MenuItem("Settings");
+                    if (ImGui.MenuItem("New")) NewClicked?.Invoke(this, EventArgs.Empty);
+                    if (ImGui.MenuItem("Open")) OpenClicked?.Invoke(this, EventArgs.Empty);
                     
+                    ImGui.Separator();
+                    
+                    if (ImGui.MenuItem("Settings")) SettingsClicked?.Invoke(this, EventArgs.Empty);
+
                     ImGui.EndMenu();
                 }
                 
