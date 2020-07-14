@@ -1,16 +1,24 @@
 using System;
+using System.Diagnostics;
 using ImGuiHandler;
 using ImGuiNET;
 
-namespace SharpPlotter.MonoGame.UiElements
+namespace SharpPlotter.Ui.UiElements
 {
     public class AppToolbar : ImGuiElement
     {
+        private readonly ScriptManager _scriptManager;
+
         public Point2d? MousePointerGraphLocation { get; set; }
         
         public event EventHandler NewClicked;
         public event EventHandler OpenClicked;
         public event EventHandler SettingsClicked;
+
+        public AppToolbar(ScriptManager scriptManager)
+        {
+            _scriptManager = scriptManager;
+        }
         
         protected override void CustomRender()
         {
@@ -26,6 +34,17 @@ namespace SharpPlotter.MonoGame.UiElements
                     if (ImGui.MenuItem("Settings")) SettingsClicked?.Invoke(this, EventArgs.Empty);
 
                     ImGui.EndMenu();
+                }
+
+                if (!string.IsNullOrWhiteSpace(_scriptManager.CurrentFileName) && _scriptManager.CurrentLanguage != null)
+                {
+                    var languageName = _scriptManager.CurrentLanguage.Value switch
+                    {
+                        ScriptLanguage.CSharp => "C#",
+                        _ => ""
+                    };
+                    
+                    ImGui.Text($"- {_scriptManager.CurrentFileName} ({languageName})");
                 }
                 
                 if (MousePointerGraphLocation != null)

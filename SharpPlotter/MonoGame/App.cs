@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SharpPlotter.Rendering;
+using SharpPlotter.Ui;
 using SkiaSharp;
 
 namespace SharpPlotter.MonoGame
@@ -17,12 +18,13 @@ namespace SharpPlotter.MonoGame
         private readonly Camera _camera;
         private readonly byte[] _rawCanvasPixels;
         private readonly GraphedItems _graphedItems;
+        private readonly ScriptManager _scriptManager;
+        private readonly AppSettings _appSettings;
         private SpriteBatch _spriteBatch;
         private Texture2D _graphTexture;
         private ScriptRunner _scriptRunner;
         private InputHandler _inputHandler;
         private PlotterUi _plotterUi;
-        private AppSettings _appSettings;
 
         public App()
         {
@@ -41,17 +43,19 @@ namespace SharpPlotter.MonoGame
             // Do a first render to get pixel data from the image for initial byte data allocation
             using var image = _camera.Render(null, null);
             _rawCanvasPixels = new byte[image.Height * image.PeekPixels().RowBytes];
-
+            
             _appSettings = SettingsIo.Load() ?? new AppSettings
             {
                 ScriptFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "SharpPlotter"),
                 TextEditorExecutable = "code",
             };
+            
+            _scriptManager = new ScriptManager(_appSettings);
         }
 
         protected override void Initialize()
         {
-            _plotterUi = new PlotterUi(this, _appSettings);
+            _plotterUi = new PlotterUi(this, _appSettings, _scriptManager);
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _inputHandler = new InputHandler(_camera, _plotterUi);
 

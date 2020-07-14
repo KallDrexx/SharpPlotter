@@ -1,8 +1,9 @@
 using System;
 using ImGuiHandler;
 using ImGuiNET;
+using SharpPlotter.MonoGame;
 
-namespace SharpPlotter.MonoGame.UiElements
+namespace SharpPlotter.Ui.UiElements
 {
     public class SettingsWindow : ImGuiElement
     {
@@ -19,6 +20,12 @@ namespace SharpPlotter.MonoGame.UiElements
         public string TextEditorExecutable
         {
             get => Get<string>();
+            set => Set(value);
+        }
+
+        public bool CloseRequested
+        {
+            get => Get<bool>();
             set => Set(value);
         }
 
@@ -60,7 +67,7 @@ namespace SharpPlotter.MonoGame.UiElements
                 if (ImGui.Button("Cancel"))
                 {
                     ImGui.CloseCurrentPopup();
-                    IsVisible = false;
+                    CloseRequested = true;
                 }
                 
                 ImGui.EndPopup();
@@ -69,7 +76,7 @@ namespace SharpPlotter.MonoGame.UiElements
             if (!isOpen)
             {
                 // X in the top right was pressed.  Treat it as a cancel
-                IsVisible = false;
+                CloseRequested = true;
             }
         }
     }

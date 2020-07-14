@@ -1,8 +1,9 @@
 using System;
 using System.IO;
 using Newtonsoft.Json;
+using SharpPlotter.MonoGame;
 
-namespace SharpPlotter.MonoGame
+namespace SharpPlotter
 {
     public static class SettingsIo
     {

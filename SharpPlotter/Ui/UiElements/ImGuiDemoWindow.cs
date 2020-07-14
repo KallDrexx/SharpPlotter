@@ -1,7 +1,7 @@
 using ImGuiHandler;
 using ImGuiNET;
 
-namespace SharpPlotter.MonoGame.UiElements
+namespace SharpPlotter.Ui.UiElements
 {
     public class ImGuiDemoWindow : ImGuiElement
     {
