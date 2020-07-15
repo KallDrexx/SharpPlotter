@@ -19,7 +19,7 @@ namespace SharpPlotter
             {
                 json = File.ReadAllText(FullSettingsPath);
             }
-            catch (IOException e)
+            catch (IOException)
             {
                 // File most likely doesn't exist
                 return null;

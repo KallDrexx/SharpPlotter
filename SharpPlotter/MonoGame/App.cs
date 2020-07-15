@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SharpPlotter.Rendering;
+using SharpPlotter.Scripting;
 using SharpPlotter.Ui;
 using SkiaSharp;
 
@@ -20,9 +21,9 @@ namespace SharpPlotter.MonoGame
         private readonly GraphedItems _graphedItems;
         private readonly ScriptManager _scriptManager;
         private readonly AppSettings _appSettings;
+        private readonly OnScreenLogger _onScreenLogger;
         private SpriteBatch _spriteBatch;
         private Texture2D _graphTexture;
-        private ScriptRunner _scriptRunner;
         private InputHandler _inputHandler;
         private PlotterUi _plotterUi;
 
@@ -51,26 +52,16 @@ namespace SharpPlotter.MonoGame
             };
             
             _scriptManager = new ScriptManager(_appSettings);
+            
+            _onScreenLogger = new OnScreenLogger();
+            _onScreenLogger.LogMessage("Use the file menu above to \ncreate a new script, or open an existing one");
         }
 
         protected override void Initialize()
         {
-            _plotterUi = new PlotterUi(this, _appSettings, _scriptManager);
+            _plotterUi = new PlotterUi(this, _appSettings, _scriptManager, _onScreenLogger);
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _inputHandler = new InputHandler(_camera, _plotterUi);
-
-            // const string filename = @"c:\temp\test.cs";
-            // _scriptRunner = new ScriptRunner(_canvas, filename);
-            // Process.Start("cmd", $"/C code {filename}");
-
-            var points = Enumerable.Range(-10, 21)
-                .Select(x => ((float) x, (float) Math.Pow(x, 2)))
-                .ToArray();
-            
-            _graphedItems.Points(Color.Red, points);
-            _graphedItems.Segments(Color.Yellow, points);
-            
-            _camera.SetGraphBounds((-10, 10), (-1, 100));
 
             base.Initialize();
         }

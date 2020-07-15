@@ -1,6 +1,7 @@
 using System;
 using ImGuiHandler;
 using ImGuiNET;
+using SharpPlotter.Scripting;
 
 namespace SharpPlotter.Ui.UiElements
 {

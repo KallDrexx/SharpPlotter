@@ -1,4 +1,4 @@
-namespace SharpPlotter
+namespace SharpPlotter.Scripting
 {
     public enum ScriptLanguage
     {

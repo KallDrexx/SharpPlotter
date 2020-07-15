@@ -2,12 +2,12 @@ using System;
 using System.Diagnostics;
 using System.IO;
 
-namespace SharpPlotter
+namespace SharpPlotter.Scripting
 {
     public class ScriptManager
     {
         private readonly AppSettings _appSettings;
-        
+
         public string CurrentFileName { get; private set; }
         public ScriptLanguage? CurrentLanguage { get; private set; }
 
@@ -51,6 +51,7 @@ namespace SharpPlotter
             
             _appSettings.AddOpenedFileName(fileName);
             OpenTextEditorCurrentFile();
+            
         }
 
         /// <summary>

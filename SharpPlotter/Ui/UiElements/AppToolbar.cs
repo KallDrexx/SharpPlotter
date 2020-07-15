@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using ImGuiHandler;
 using ImGuiNET;
+using SharpPlotter.Scripting;
 
 namespace SharpPlotter.Ui.UiElements
 {
@@ -59,11 +60,6 @@ namespace SharpPlotter.Ui.UiElements
                         {
                             OpenClicked?.Invoke(this, selectedFileToOpen);
                         }
-
-                        if (recentCount == 0)
-                        {
-                            ImGui.MenuItem("<No Recent Files>", false);
-                        }
                         
                         ImGui.Separator();
 
@@ -105,7 +101,7 @@ namespace SharpPlotter.Ui.UiElements
 
                     ImGui.EndMenu();
                 }
-
+                
                 if (!string.IsNullOrWhiteSpace(_scriptManager.CurrentFileName) && _scriptManager.CurrentLanguage != null)
                 {
                     var languageName = _scriptManager.CurrentLanguage.Value switch

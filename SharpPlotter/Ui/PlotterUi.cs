@@ -2,7 +2,7 @@ using System;
 using ImGuiHandler;
 using ImGuiHandler.MonoGame;
 using Microsoft.Xna.Framework;
-using SharpPlotter.MonoGame;
+using SharpPlotter.Scripting;
 using SharpPlotter.Ui.UiElements;
 
 namespace SharpPlotter.Ui
@@ -13,16 +13,18 @@ namespace SharpPlotter.Ui
         private readonly ImGuiDemoWindow _imGuiDemoWindow;
         private readonly AppSettings _appSettings;
         private readonly ScriptManager _scriptManager;
+        private readonly OnScreenLogger _onScreenLogger;
 
         public AppToolbar AppToolbar { get; }
 
         public bool AcceptingKeyboardInput => _imGuiManager.AcceptingKeyboardInput;
         public bool AcceptingMouseInput => _imGuiManager.AcceptingMouseInput;
 
-        public PlotterUi(Game game, AppSettings appSettings, ScriptManager scriptManager)
+        public PlotterUi(Game game, AppSettings appSettings, ScriptManager scriptManager, OnScreenLogger onScreenLogger)
         {
             _appSettings = appSettings;
             _scriptManager = scriptManager;
+            _onScreenLogger = onScreenLogger;
 
             var renderer = new MonoGameImGuiRenderer(game);
             renderer.Initialize();
@@ -31,6 +33,12 @@ namespace SharpPlotter.Ui
             
             _imGuiDemoWindow = new ImGuiDemoWindow();
             _imGuiManager.AddElement(_imGuiDemoWindow);
+            
+            var messageOverlay = new MessageOverlay(onScreenLogger){IsVisible = true};
+            messageOverlay.DismissMostRecentMessageClicked +=
+                (sender, args) => _onScreenLogger.RemoveMostRecentMessage();
+            
+            _imGuiManager.AddElement(messageOverlay);
             
             AppToolbar = new AppToolbar(_scriptManager, _appSettings){IsVisible = true};
             _imGuiManager.AddElement(AppToolbar);
@@ -91,6 +99,7 @@ namespace SharpPlotter.Ui
                 
                 _imGuiManager.RemoveElement(dialog);
                 SettingsIo.Save(_appSettings);
+                _onScreenLogger.Clear();
             };
 
             dialog.PropertyChanged += (sender, args) =>
@@ -112,11 +121,12 @@ namespace SharpPlotter.Ui
             }
             catch (Exception exception)
             {
-                // Todo: need a good way to display generic errors
-                Console.WriteLine($"Exception opening file: {exception.Message}");
+                _onScreenLogger.LogMessage($"Exception opening file: {exception.Message}");
+                return;
             }
             
             SettingsIo.Save(_appSettings);
+            _onScreenLogger.Clear();
         }
     }
 }

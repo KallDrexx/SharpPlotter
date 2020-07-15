@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.Xna.Framework;
 
-namespace SharpPlotter
+namespace SharpPlotter.Scripting
 {
     public class ScriptRunner
     {
