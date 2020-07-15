@@ -21,7 +21,7 @@ namespace SharpPlotter.Scripting
         public GraphedItems RunScript(string scriptContent)
         {
             var items = new GraphedItems();
-            var globals = new ScriptGlobals {Plot = items};
+            var globals = new ScriptGlobals {Graph = items};
             CSharpScript.RunAsync(scriptContent, _scriptOptions, globals).GetAwaiter().GetResult();
 
             return items;
@@ -30,7 +30,7 @@ namespace SharpPlotter.Scripting
         // Must be public due to roslyn constraints
         public class ScriptGlobals
         {
-            public GraphedItems Plot { get; set; }
+            public GraphedItems Graph { get; set; }
         }
     }
 }

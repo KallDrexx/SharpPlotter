@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using ImGuiHandler;
 using ImGuiHandler.MonoGame;
 using Microsoft.Xna.Framework;
@@ -89,11 +90,16 @@ namespace SharpPlotter.Ui
             {
                 try
                 {
-                    _scriptManager.CreateNewScript(dialog.FileName, dialog.SelectedLanguage);
+                    _scriptManager.CreateNewScript(dialog.FileName?.Trim(), dialog.SelectedLanguage);
+                }
+                catch (InvalidOperationException exception)
+                {
+                    dialog.ErrorText = exception.Message;
+                    return;
                 }
                 catch (Exception exception)
                 {
-                    dialog.ErrorText = $"Exception: {exception.Message}";
+                    dialog.ErrorText = $"Exception: {exception}";
                     return;
                 }
                 
@@ -117,7 +123,7 @@ namespace SharpPlotter.Ui
         {
             try
             {
-                _scriptManager.OpenExistingScript(fileName);
+                _scriptManager.OpenExistingScript(fileName?.Trim());
             }
             catch (Exception exception)
             {

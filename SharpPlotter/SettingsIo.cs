@@ -1,14 +1,13 @@
 using System;
 using System.IO;
 using Newtonsoft.Json;
-using SharpPlotter.MonoGame;
 
 namespace SharpPlotter
 {
     public static class SettingsIo
     {
         private const string SettingsFileName = "SharpPlotter.config";
-        private static readonly string SettingsFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        private static readonly string SettingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SharpPlotter");
         private static readonly string FullSettingsPath = Path.Combine(SettingsFolder, SettingsFileName);
 
         public static AppSettings Load()
@@ -50,9 +49,13 @@ namespace SharpPlotter
             }
             else
             {
+                if (!Directory.Exists(SettingsFolder))
+                {
+                    Directory.CreateDirectory(SettingsFolder);
+                }
+
                 File.Move(tempFile, FullSettingsPath);
             }
-            
         }
     }
 }

@@ -13,8 +13,7 @@ namespace SharpPlotter.Scripting
         private readonly AppSettings _appSettings;
         private readonly OnScreenLogger _onScreenLogger;
         private readonly FileSystemWatcher _fileSystemWatcher;
-        private string _previousFileName;
-        
+
         private IScriptRunner _scriptRunner;
 
         public string CurrentFileName { get; private set; }

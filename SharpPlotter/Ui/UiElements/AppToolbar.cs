@@ -14,7 +14,8 @@ namespace SharpPlotter.Ui.UiElements
         private readonly ScriptManager _scriptManager;
         private readonly AppSettings _appSettings;
         private readonly List<string> _filesInScriptDirectory = new List<string>();
-        private bool _scriptFileListLoaded;
+        private readonly List<string> _recentlyOpenedFiles = new List<string>();
+        private bool _scriptFileListLoaded, _recentFilesListLoaded;
 
         public Point2d? MousePointerGraphLocation { get; set; }
         
@@ -39,21 +40,40 @@ namespace SharpPlotter.Ui.UiElements
                     {
                         var selectedFileToOpen = (string) null;
                         var openFile = false;
-                        var recentCount = 0;
-                        foreach (var recentlyOpenedFile in _appSettings.RecentlyOpenedFiles)
+
+                        if (!_recentFilesListLoaded)
                         {
-                            if (!recentlyOpenedFile.Equals(_scriptManager.CurrentFileName, StringComparison.Ordinal))
+                            var files = _appSettings.RecentlyOpenedFiles
+                                            ?.Where(x => !x.Equals(_scriptManager.CurrentFileName,
+                                                StringComparison.OrdinalIgnoreCase))
+                                        ?? Array.Empty<string>();
+                            
+                            _recentlyOpenedFiles.Clear();
+                            _recentlyOpenedFiles.AddRange(files);
+                            _recentFilesListLoaded = true;
+                        }
+
+                        var visibleRecentlyOpenedFiles = _appSettings.RecentlyOpenedFiles
+                                                             ?.Where(x => !x.Equals(_scriptManager.CurrentFileName,
+                                                                 StringComparison.OrdinalIgnoreCase))
+                                                         ?? Array.Empty<string>();
+
+                        if (_recentlyOpenedFiles.Any())
+                        {
+                            foreach (var recentFile in visibleRecentlyOpenedFiles)
                             {
-                                if (ImGui.MenuItem(recentlyOpenedFile))
+                                if (ImGui.MenuItem(recentFile))
                                 {
                                     // We can't trigger the open event here, due to being in hte middle of iteration
                                     // of the recently opened file loop
                                     openFile = true;
-                                    selectedFileToOpen = recentlyOpenedFile;
+                                    selectedFileToOpen = recentFile;
                                 }
-                                
-                                recentCount++;
                             }
+                        }
+                        else
+                        {
+                            ImGui.MenuItem("<No Files Recently Opened>");
                         }
 
                         if (openFile)
@@ -93,6 +113,10 @@ namespace SharpPlotter.Ui.UiElements
                         }
                         
                         ImGui.EndMenu();
+                    }
+                    else
+                    {
+                        _recentFilesListLoaded = false;
                     }
                     
                     ImGui.Separator();

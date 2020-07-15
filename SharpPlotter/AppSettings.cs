@@ -9,7 +9,7 @@ namespace SharpPlotter
         public string ScriptFolderPath { get; set; }
         public string TextEditorExecutable { get; set; }
 
-        public List<string> RecentlyOpenedFiles { get; set; }
+        public List<string> RecentlyOpenedFiles { get; set; } = new List<string>();
 
         public void AddOpenedFileName(string fileName)
         {
