@@ -32,11 +32,12 @@ namespace SharpPlotter.Ui
             _imGuiDemoWindow = new ImGuiDemoWindow();
             _imGuiManager.AddElement(_imGuiDemoWindow);
             
-            AppToolbar = new AppToolbar(_scriptManager){IsVisible = true};
+            AppToolbar = new AppToolbar(_scriptManager, _appSettings){IsVisible = true};
             _imGuiManager.AddElement(AppToolbar);
 
             AppToolbar.SettingsClicked += (sender, args) => CreateSettingsWindow();
             AppToolbar.NewClicked += (sender, args) => CreateNewFileDialog();
+            AppToolbar.OpenClicked += (sender, args) => OpenScriptFile(args);
         }
 
         public void Draw(TimeSpan timeSinceLastFrame)
@@ -89,6 +90,7 @@ namespace SharpPlotter.Ui
                 }
                 
                 _imGuiManager.RemoveElement(dialog);
+                SettingsIo.Save(_appSettings);
             };
 
             dialog.PropertyChanged += (sender, args) =>
@@ -100,6 +102,21 @@ namespace SharpPlotter.Ui
                         break;
                 }
             };
+        }
+
+        private void OpenScriptFile(string fileName)
+        {
+            try
+            {
+                _scriptManager.OpenExistingScript(fileName);
+            }
+            catch (Exception exception)
+            {
+                // Todo: need a good way to display generic errors
+                Console.WriteLine($"Exception opening file: {exception.Message}");
+            }
+            
+            SettingsIo.Save(_appSettings);
         }
     }
 }

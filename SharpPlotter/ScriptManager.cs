@@ -53,6 +53,32 @@ namespace SharpPlotter
             OpenTextEditorCurrentFile();
         }
 
+        /// <summary>
+        /// Open the specified file.  This assumes the file exists in the scripts folder.
+        /// </summary>
+        public void OpenExistingScript(string fileName)
+        {
+            var fullPath = Path.Combine(_appSettings.ScriptFolderPath, fileName);
+            var extension = Path.GetExtension(fileName);
+
+            var language = extension?.ToLower() switch
+            {
+                ".cs" => ScriptLanguage.CSharp,
+                _ => throw new NotSupportedException($"No scripting language could be found for extension '{extension}'")
+            };
+
+            if (!File.Exists(fullPath))
+            {
+                throw new FileNotFoundException($"The file '{fileName}' does not exist in the script directory");
+            }
+            
+            CurrentLanguage = language;
+            CurrentFileName = fileName;
+            
+            _appSettings.AddOpenedFileName(fileName);
+            OpenTextEditorCurrentFile();
+        }
+
         private void OpenTextEditorCurrentFile()
         {
             if (string.IsNullOrWhiteSpace(CurrentFileName) || 
@@ -62,7 +88,7 @@ namespace SharpPlotter
             }
             
             var fullPath = Path.Combine(_appSettings.ScriptFolderPath, CurrentFileName);
-            Process.Start("cmd", $"/C {_appSettings.TextEditorExecutable} {fullPath}");
+            Process.Start("cmd", $"/C {_appSettings.TextEditorExecutable} \"{fullPath}\"");
         }
     }
 }

@@ -50,7 +50,7 @@ namespace SharpPlotter.Ui.UiElements
                 ImGui.Combo("Scripting Language", ref selectedIndex, LanguageOptions, LanguageOptions.Length);
                 SelectedLanguage = selectedIndex switch
                 {
-                    0 => ScriptLanguage.CSharp,
+                    0 => (ScriptLanguage?) ScriptLanguage.CSharp,
                     _ => null
                 };
 
