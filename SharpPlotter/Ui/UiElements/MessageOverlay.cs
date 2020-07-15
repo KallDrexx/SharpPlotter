@@ -20,8 +20,8 @@ namespace SharpPlotter.Ui.UiElements
 
         protected override void CustomRender()
         {
-            var messages = _onScreenLogger.Messages;
-            if (!messages.Any())
+            var message = _onScreenLogger.GetLatestMessage();
+            if (message == null)
             {
                 return;
             }
@@ -42,7 +42,7 @@ namespace SharpPlotter.Ui.UiElements
             
             if (ImGui.Begin("Message", flags))
             {
-                ImGui.Text(messages[0]);
+                ImGui.Text(message);
                 ImGui.NewLine();
                 if (ImGui.Button("Dismiss"))
                 {

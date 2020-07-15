@@ -1,23 +1,16 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Concurrent;
 
 namespace SharpPlotter
 {
     public class OnScreenLogger
     {
-        private const int MaxMessageCount = 10;
-        
-        private readonly List<string> _messages = new List<string>(MaxMessageCount + 1);
+        private readonly ConcurrentQueue<string> _messages = new ConcurrentQueue<string>();
 
-        public IReadOnlyList<string> Messages => _messages;
+        public string GetLatestMessage() => _messages.TryPeek(out var message) ? message : null;
 
         public void LogMessage(string message)
         {
-            _messages.Insert(0, message);
-            while (_messages.Count > MaxMessageCount)
-            {
-                _messages.RemoveAt(_messages.Count - 1);
-            }
+            _messages.Enqueue(message);
         }
 
         public void Clear()
@@ -27,10 +20,7 @@ namespace SharpPlotter
 
         public void RemoveMostRecentMessage()
         {
-            if (_messages.Any())
-            {
-                _messages.RemoveAt(0);
-            }
+            _messages.TryDequeue(out _);
         }
     }
 }

@@ -1,19 +1,32 @@
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SharpPlotter.Scripting
 {
     public class ScriptManager
     {
+        private readonly ConcurrentQueue<string> _waitingScriptContent = new ConcurrentQueue<string>();
         private readonly AppSettings _appSettings;
+        private readonly OnScreenLogger _onScreenLogger;
+        private readonly FileSystemWatcher _fileSystemWatcher;
+        private string _previousFileName;
+        
+        private IScriptRunner _scriptRunner;
 
         public string CurrentFileName { get; private set; }
         public ScriptLanguage? CurrentLanguage { get; private set; }
 
-        public ScriptManager(AppSettings appSettings)
+        public ScriptManager(AppSettings appSettings, OnScreenLogger onScreenLogger)
         {
             _appSettings = appSettings;
+            _onScreenLogger = onScreenLogger;
+            _fileSystemWatcher = new FileSystemWatcher();
+            
+            _fileSystemWatcher.Changed += FileSystemWatcherOnChanged;
         }
 
         /// <summary>
@@ -51,7 +64,7 @@ namespace SharpPlotter.Scripting
             
             _appSettings.AddOpenedFileName(fileName);
             OpenTextEditorCurrentFile();
-            
+            SetupScriptExecution();
         }
 
         /// <summary>
@@ -78,6 +91,35 @@ namespace SharpPlotter.Scripting
             
             _appSettings.AddOpenedFileName(fileName);
             OpenTextEditorCurrentFile();
+            SetupScriptExecution();
+        }
+
+        public GraphedItems CheckForNewGraphedItems()
+        {
+            if (!_waitingScriptContent.Any())
+            {
+                return null;
+            }
+            
+            // We only care about the latest changes waiting to be run
+            var scriptContent = (string) null;
+            while (_waitingScriptContent.TryDequeue(out var content))
+            {
+                // We want to make sure only to rewrite `scriptContent` if the dequeue was successful, if we try
+                // to use `content` below it will always be null, since the last time this gets called it will
+                // always return null.
+                scriptContent = content;
+            }
+
+            try
+            {
+                return _scriptRunner.RunScript(scriptContent);
+            }
+            catch (Exception exception)
+            {
+                _onScreenLogger.LogMessage($"Failed to run script:\n{exception}");
+                return null;
+            }
         }
 
         private void OpenTextEditorCurrentFile()
@@ -90,6 +132,62 @@ namespace SharpPlotter.Scripting
             
             var fullPath = Path.Combine(_appSettings.ScriptFolderPath, CurrentFileName);
             Process.Start("cmd", $"/C {_appSettings.TextEditorExecutable} \"{fullPath}\"");
+        }
+
+        private void SetupScriptExecution()
+        {
+            _scriptRunner = CurrentLanguage switch
+            {
+                ScriptLanguage.CSharp => new CSharpScriptRunner(),
+                _ => throw new NotSupportedException($"No script runner for script of type '{CurrentLanguage}'")
+            };
+
+            _fileSystemWatcher.EnableRaisingEvents = false;
+            _fileSystemWatcher.Path = _appSettings.ScriptFolderPath;
+            _fileSystemWatcher.Filter = CurrentFileName;
+            _fileSystemWatcher.EnableRaisingEvents = true;
+
+            var script = File.ReadAllText(Path.Combine(_appSettings.ScriptFolderPath, CurrentFileName));
+            _waitingScriptContent.Enqueue(script);
+        }
+
+        private void FileSystemWatcherOnChanged(object sender, FileSystemEventArgs e)
+        {
+            Task.Run(async () =>
+            {
+                // This sometimes triggers too soon while the other application is still writing, and thus the other
+                // application will have the file locked.  So we need to retry a few times until we are allowed
+                // to open it.
+                const int maxRetry = 10;
+                var retryCount = 0;
+                while (true)
+                {
+                    try
+                    {
+                        var script = await File.ReadAllTextAsync(e.FullPath);
+                        _waitingScriptContent.Enqueue(script);
+                        return;
+                    }
+                    catch (IOException exception)
+                    {
+                        if (retryCount >= maxRetry)
+                        {
+                            _onScreenLogger.LogMessage(
+                                $"Failed to load changes from current file {maxRetry} times:\n{exception}");
+
+                            return;
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        _onScreenLogger.LogMessage($"Failed to read from current file:\n{exception}");
+                        return;
+                    }
+
+                    await Task.Delay(10);
+                    retryCount++;
+                }
+            });
         }
     }
 }

@@ -10,23 +10,18 @@ namespace SharpPlotter
     {
         private readonly List<RenderedPoint> _points = new List<RenderedPoint>();
         private readonly List<RenderedSegment> _segments = new List<RenderedSegment>();
+
+        public GraphedItems()
+        {
+            // Always start with true, as if this is a new object then obviously something has changed.
+            ItemsChangedSinceLastRender = true;
+        }
         
         /// <summary>
         /// Returns true if any changes have been made to any collection of graph-able items.  This resets any time
         /// the list of items to render is retrieved.
         /// </summary>
         public bool ItemsChangedSinceLastRender { get; private set; }
-
-        /// <summary>
-        /// Clear all items from the graph
-        /// </summary>
-        public void Clear()
-        {
-            _points.Clear();
-            _segments.Clear();
-
-            ItemsChangedSinceLastRender = true;
-        }
 
         /// <summary>
         /// Add white points via tuples

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -18,10 +17,10 @@ namespace SharpPlotter.MonoGame
         
         private readonly Camera _camera;
         private readonly byte[] _rawCanvasPixels;
-        private readonly GraphedItems _graphedItems;
         private readonly ScriptManager _scriptManager;
         private readonly AppSettings _appSettings;
         private readonly OnScreenLogger _onScreenLogger;
+        private GraphedItems _graphedItems;
         private SpriteBatch _spriteBatch;
         private Texture2D _graphTexture;
         private InputHandler _inputHandler;
@@ -50,11 +49,11 @@ namespace SharpPlotter.MonoGame
                 ScriptFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "SharpPlotter"),
                 TextEditorExecutable = "code",
             };
-            
-            _scriptManager = new ScriptManager(_appSettings);
-            
+
             _onScreenLogger = new OnScreenLogger();
             _onScreenLogger.LogMessage("Use the file menu above to \ncreate a new script, or open an existing one");
+            
+            _scriptManager = new ScriptManager(_appSettings, _onScreenLogger);
         }
 
         protected override void Initialize()
@@ -69,6 +68,12 @@ namespace SharpPlotter.MonoGame
         protected override void Update(GameTime gameTime)
         {
             _inputHandler.Update(gameTime);
+
+            var newGraphedItems = _scriptManager.CheckForNewGraphedItems();
+            if (newGraphedItems != null)
+            {
+                _graphedItems = newGraphedItems;
+            }
 
             base.Update(gameTime);
         }
