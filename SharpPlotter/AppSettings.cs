@@ -9,10 +9,12 @@ namespace SharpPlotter
         public string ScriptFolderPath { get; set; }
         public string TextEditorExecutable { get; set; }
 
-        public List<string> RecentlyOpenedFiles { get; set; } = new List<string>();
+        // ReSharper disable once MemberCanBePrivate.Global
+        public List<string> RecentlyOpenedFiles { get; set; }
 
         public void AddOpenedFileName(string fileName)
         {
+            RecentlyOpenedFiles ??= new List<string>();
             RecentlyOpenedFiles.Remove(fileName);
             
             RecentlyOpenedFiles.Insert(0, fileName);
