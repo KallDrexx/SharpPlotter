@@ -10,6 +10,16 @@ namespace SharpPlotter
     {
         private readonly List<RenderedPoint> _points = new List<RenderedPoint>();
         private readonly List<RenderedSegment> _segments = new List<RenderedSegment>();
+        
+        /// <summary>
+        /// The smallest X and Y values across all graphed items
+        /// </summary>
+        public Point2d? MinCoordinates { get; private set; }
+        
+        /// <summary>
+        /// The largest X and Y values across all graphed items
+        /// </summary>
+        public Point2d? MaxCoordinates { get; private set; }
 
         public GraphedItems()
         {
@@ -42,7 +52,7 @@ namespace SharpPlotter
                 _points.Add(new RenderedPoint(new Point2d(x, y), color));
             }
             
-            ItemsChangedSinceLastRender = true;
+            GraphItemsUpdated();
         }
 
         /// <summary>
@@ -73,7 +83,7 @@ namespace SharpPlotter
                 _points.Add(new RenderedPoint(new Point2d(point[0], point[1]), color));
             }
             
-            ItemsChangedSinceLastRender = true;
+            GraphItemsUpdated();
         }
         
         /// <summary>
@@ -106,7 +116,7 @@ namespace SharpPlotter
                 lastPoint = point;
             }
             
-            ItemsChangedSinceLastRender = true;
+            GraphItemsUpdated();
         }
 
         /// <summary>
@@ -148,7 +158,7 @@ namespace SharpPlotter
                 lastPoint = point;
             }
             
-            ItemsChangedSinceLastRender = true;
+            GraphItemsUpdated();
         }
         
         /// <summary>
@@ -158,6 +168,41 @@ namespace SharpPlotter
         {
             ItemsChangedSinceLastRender = false;
             return new ItemsToRender(_points, _segments);
+        }
+
+        private void GraphItemsUpdated()
+        {
+            ItemsChangedSinceLastRender = true;
+            
+            var allCoordinates = _points.Select(x => x.Point)
+                .Union(_segments.Select(x => x.End))
+                .Union(_segments.Select(x => x.End))
+                .Distinct()
+                .ToArray();
+
+            if (allCoordinates.Any())
+            {
+                float minX = float.MaxValue,
+                    minY = float.MaxValue,
+                    maxX = float.MinValue,
+                    maxY = float.MinValue;
+
+                foreach (var coordinate in allCoordinates)
+                {
+                    if (minX > coordinate.X) minX = coordinate.X;
+                    if (minY > coordinate.Y) minY = coordinate.Y;
+                    if (maxX < coordinate.X) maxX = coordinate.X;
+                    if (maxY < coordinate.Y) maxY = coordinate.Y;
+                }
+                
+                MinCoordinates = new Point2d(minX, minY);
+                MaxCoordinates = new Point2d(maxX, maxY);
+            }
+            else
+            {
+                MinCoordinates = null;
+                MaxCoordinates = null;
+            }
         }
     }
 }

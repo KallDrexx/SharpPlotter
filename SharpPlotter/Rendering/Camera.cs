@@ -140,13 +140,19 @@ namespace SharpPlotter.Rendering
                 throw new ArgumentException(message);
             }
 
-            _basePixelsPerXUnit = _usableWidth / (x.max - x.min);
-            _basePixelsPerYUnit = _usableHeight / (y.max - y.min);
+            // Without a buffer the points around the edge are right up against the edge of the canvas, which makes
+            // it inconvenient to look at.  So we want to make sure there is some graph space available around the edge
+            // points.
+            const int boundsBufferInPixels = 40;
+            
+            _basePixelsPerXUnit = (_usableWidth - boundsBufferInPixels * 2) / (x.max - x.min);
+            _basePixelsPerYUnit = (_usableHeight - boundsBufferInPixels * 2) / (y.max - y.min);
 
-            var originX = x.max - (x.max - x.min) / 2;
-            var originY = y.max - (y.max - y.min) / 2;
+            var originX = x.max - (x.max - x.min) / 2f;
+            var originY = y.max - (y.max - y.min) / 2f;
+            
             Origin = new Point2d(originX, originY);
-
+            ZoomFactor = 1f;
             CameraHasMoved = true;
         }
 

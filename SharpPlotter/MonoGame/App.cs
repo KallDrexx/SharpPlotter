@@ -25,6 +25,7 @@ namespace SharpPlotter.MonoGame
         private Texture2D _graphTexture;
         private InputHandler _inputHandler;
         private PlotterUi _plotterUi;
+        private bool _resetCameraRequested;
 
         public App()
         {
@@ -61,6 +62,7 @@ namespace SharpPlotter.MonoGame
             _plotterUi = new PlotterUi(this, _appSettings, _scriptManager, _onScreenLogger);
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _inputHandler = new InputHandler(_camera, _plotterUi);
+            _inputHandler.ResetCameraRequested += (sender, args) => _resetCameraRequested = true;
 
             base.Initialize();
         }
@@ -68,6 +70,12 @@ namespace SharpPlotter.MonoGame
         protected override void Update(GameTime gameTime)
         {
             _inputHandler.Update(gameTime);
+
+            if (_resetCameraRequested)
+            {
+                SetCameraToSizeOfGraphedItems();
+                _resetCameraRequested = false;
+            }
 
             var newGraphedItems = _scriptManager.CheckForNewGraphedItems();
             if (newGraphedItems != null)
@@ -107,6 +115,25 @@ namespace SharpPlotter.MonoGame
 
             _graphTexture ??= new Texture2D(graphicsDevice, image.Width, image.Height);
             _graphTexture.SetData(_rawCanvasPixels);
+        }
+
+        private void SetCameraToSizeOfGraphedItems()
+        {
+            var minCoords = _graphedItems?.MinCoordinates;
+            var maxCoords = _graphedItems?.MaxCoordinates;
+
+            if (minCoords == null || maxCoords == null)
+            {
+                _camera.Origin = new Point2d(0, 0);
+                _camera.ZoomFactor = 1f;
+                _camera.ResetFieldOfView();
+            }
+            else
+            {
+                var x = ((int) minCoords.Value.X, (int) maxCoords.Value.X);
+                var y = ((int) minCoords.Value.Y, (int) maxCoords.Value.Y);
+                _camera.SetGraphBounds(x, y);
+            }
         }
     }
 }

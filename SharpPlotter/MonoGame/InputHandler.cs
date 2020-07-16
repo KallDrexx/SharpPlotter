@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using SharpPlotter.Rendering;
@@ -14,6 +15,8 @@ namespace SharpPlotter.MonoGame
         private readonly PlotterUi _plotterUi;
         private KeyboardState _previousKeyState, _currentKeyState;
         private MouseState _previousMouseState, _currentMouseState;
+
+        public event EventHandler ResetCameraRequested;
 
         public InputHandler(Camera camera, PlotterUi plotterUi)
         {
@@ -108,9 +111,7 @@ namespace SharpPlotter.MonoGame
 
                 if (HasBeenPressed(Keys.Back))
                 {
-                    _camera.Origin = new Point2d(0, 0);
-                    _camera.ZoomFactor = 1f;
-                    _camera.ResetFieldOfView();
+                    ResetCameraRequested?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
