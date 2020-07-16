@@ -22,7 +22,17 @@ namespace SharpPlotter.Scripting
         {
             var items = new GraphedItems();
             var globals = new ScriptGlobals {Graph = items};
-            CSharpScript.RunAsync(scriptContent, _scriptOptions, globals).GetAwaiter().GetResult();
+
+            try
+            {
+                CSharpScript.RunAsync(scriptContent, _scriptOptions, globals).GetAwaiter().GetResult();
+            }
+            catch (CompilationErrorException exception)
+            {
+                // Since this is a compiler error then we don't need the stack trace shown, as that's just
+                // noise that won't help end users
+                throw new ScriptException("Compile Error", false, exception);
+            }
 
             return items;
         }

@@ -114,11 +114,29 @@ namespace SharpPlotter.Scripting
             {
                 return _scriptRunner.RunScript(scriptContent);
             }
+            catch (ScriptException exception)
+            {
+                var content = "Failed to run script:\n\n";
+                
+                if (exception.ShowStackTrace)
+                {
+                    // ReSharper disable once PossibleNullReferenceException
+                    content += exception.InnerException.ToString();
+                }
+                else
+                {
+                    // ReSharper disable once PossibleNullReferenceException
+                    content += $"{exception.Message}: {exception.InnerException.Message}";
+                }
+                
+                _onScreenLogger.LogMessage(content);
+            }
             catch (Exception exception)
             {
-                _onScreenLogger.LogMessage($"Failed to run script:\n{exception}");
-                return null;
+                _onScreenLogger.LogMessage($"Failed to run script:\n\n{exception}");
             }
+            
+            return null;
         }
 
         private void OpenTextEditorCurrentFile()
