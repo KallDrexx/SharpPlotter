@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Numerics;
 using ImGuiHandler;
 using ImGuiNET;
@@ -32,17 +31,18 @@ namespace SharpPlotter.Ui.UiElements
                 _center = new Vector2(ImGui.GetIO().DisplaySize.X * 0.5f, ImGui.GetIO().DisplaySize.Y * 0.5f);
                 _pivot = new Vector2(0.5f, 0.5f);
             }
-
-            ImGui.SetNextWindowPos(_center.Value, ImGuiCond.Always, _pivot.Value);
+            
+            ImGui.SetNextWindowPos(new Vector2(0, 18));
+            ImGui.SetNextWindowSize(new Vector2(ImGui.GetIO().DisplaySize.X, 0));
             const ImGuiWindowFlags flags = ImGuiWindowFlags.NoCollapse |
-                                           ImGuiWindowFlags.AlwaysAutoResize |
+                                           ImGuiWindowFlags.NoDecoration |
                                            ImGuiWindowFlags.NoSavedSettings |
                                            ImGuiWindowFlags.NoFocusOnAppearing |
                                            ImGuiWindowFlags.NoMove;
             
             if (ImGui.Begin("Message", flags))
             {
-                ImGui.Text(message);
+                ImGui.TextWrapped(message);
                 ImGui.NewLine();
                 if (ImGui.Button("Dismiss"))
                 {

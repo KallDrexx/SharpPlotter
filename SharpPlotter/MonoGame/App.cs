@@ -52,7 +52,7 @@ namespace SharpPlotter.MonoGame
             };
 
             _onScreenLogger = new OnScreenLogger();
-            _onScreenLogger.LogMessage("Use the file menu above to \ncreate a new script, or open an existing one");
+            _onScreenLogger.LogMessage("Use the file menu above to create a new script, or to open an existing one");
             
             _scriptManager = new ScriptManager(_appSettings, _onScreenLogger);
         }

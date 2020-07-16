@@ -43,6 +43,8 @@ namespace SharpPlotter.Ui
             
             AppToolbar = new AppToolbar(_scriptManager, _appSettings){IsVisible = true};
             _imGuiManager.AddElement(AppToolbar);
+            
+            _imGuiManager.AddElement(new ImGuiSettings{IsVisible = true});
 
             AppToolbar.SettingsClicked += (sender, args) => CreateSettingsWindow();
             AppToolbar.NewClicked += (sender, args) => CreateNewFileDialog();
