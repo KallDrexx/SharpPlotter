@@ -39,11 +39,18 @@ namespace SharpPlotter.Ui.UiElements
                                            ImGuiWindowFlags.NoSavedSettings |
                                            ImGuiWindowFlags.NoFocusOnAppearing |
                                            ImGuiWindowFlags.NoMove;
-            
-            if (ImGui.Begin("Message", flags))
+
+            if (ImGui.Begin($"Message", flags))
             {
                 ImGui.TextWrapped(message);
                 ImGui.NewLine();
+
+                var count = _onScreenLogger.MessageCount;
+                if (count > 1)
+                {
+                    ImGui.Text($"({count - 1} message(s) remaining)");
+                }
+                
                 if (ImGui.Button("Dismiss"))
                 {
                     DismissMostRecentMessageClicked?.Invoke(this, EventArgs.Empty);

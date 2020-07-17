@@ -6,6 +6,7 @@ namespace SharpPlotter
     {
         private readonly ConcurrentQueue<string> _messages = new ConcurrentQueue<string>();
 
+        public int MessageCount => _messages.Count;
         public string GetLatestMessage() => _messages.TryPeek(out var message) ? message : null;
 
         public void LogMessage(string message)
