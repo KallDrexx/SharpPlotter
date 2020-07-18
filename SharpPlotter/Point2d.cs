@@ -18,7 +18,7 @@ namespace SharpPlotter
         public static bool operator ==(Point2d first, Point2d second)
         {
             return Math.Abs(first.X - second.X) < 0.0001f &&
-                   Math.Abs(first.Y - second.Y) < 0.000f;
+                   Math.Abs(first.Y - second.Y) < 0.0001f;
         }
 
         public static bool operator !=(Point2d first, Point2d second)

@@ -141,6 +141,11 @@ namespace SharpPlotter.MonoGame
                 _camera.ZoomFactor = 1f;
                 _camera.ResetFieldOfView();
             }
+            else if (minCoords.Value == maxCoords.Value)
+            {
+                // Only one point exists, so instead of binding to it we just want to center it
+                _camera.Origin = minCoords.Value;
+            }
             else
             {
                 var x = ((int) minCoords.Value.X, (int) maxCoords.Value.X);
