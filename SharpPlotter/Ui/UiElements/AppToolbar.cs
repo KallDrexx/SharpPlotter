@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using ImGuiHandler;
@@ -22,6 +21,9 @@ namespace SharpPlotter.Ui.UiElements
         public event EventHandler NewClicked;
         public event EventHandler<string> OpenClicked;
         public event EventHandler SettingsClicked;
+        public event EventHandler UpdateCameraOriginRequested;
+        public event EventHandler UpdateCameraBoundsRequested;
+        public event EventHandler ResetCameraRequested;
 
         public Point2d CameraOrigin
         {
@@ -177,6 +179,13 @@ namespace SharpPlotter.Ui.UiElements
         {
             if (ImGui.BeginMenu("View"))
             {
+                if (ImGui.Button("Reset Camera"))
+                {
+                    ResetCameraRequested?.Invoke(this, EventArgs.Empty);
+                }
+                
+                ImGui.NewLine();
+                
                 var originX = (int) CameraOrigin.X;
                 var originY = (int) CameraOrigin.Y;
                 var minX = (int) CameraMinBounds.X;
@@ -184,33 +193,40 @@ namespace SharpPlotter.Ui.UiElements
                 var minY = (int) CameraMinBounds.Y;
                 var maxY = (int) CameraMaxBounds.Y;
 
-                var cameraOriginChanged = ImGui.InputInt("Camera Origin X", ref originX) ||
-                                          ImGui.InputInt("Camera Origin Y", ref originY);
-
-                var cameraBoundsChanged = ImGui.InputInt("Camera Min X", ref minX) ||
-                                          ImGui.InputInt("Camera Max X", ref maxX) ||
-                                          ImGui.InputInt("Camera Min Y", ref minY) ||
-                                          ImGui.InputInt("Camera Max Y", ref maxY);
-
-                if (cameraOriginChanged)
+                ImGui.InputInt("Camera Origin X", ref originX); 
+                ImGui.InputInt("Camera Origin Y", ref originY);
+                
+                if (ImGui.Button("Update Camera Origin"))
                 {
-                    CameraOrigin = new Point2d(originX, originY);
-                }
-
-                if (cameraBoundsChanged)
-                {
-                    CameraMinBounds = new Point2d(minX, minY);
-                    CameraMaxBounds = new Point2d(maxX, maxY);
+                    UpdateCameraOriginRequested?.Invoke(this, EventArgs.Empty);
                 }
                 
+                ImGui.NewLine();
+
+                ImGui.InputInt("Camera Min X", ref minX);
+                ImGui.InputInt("Camera Max X", ref maxX);
+                ImGui.InputInt("Camera Min Y", ref minY);
+                ImGui.InputInt("Camera Max Y", ref maxY);
+
+                CameraOrigin = new Point2d(originX, originY);
+                CameraMinBounds = new Point2d(minX, minY);
+                CameraMaxBounds = new Point2d(maxX, maxY);
+                
+                ImGui.NewLine();
+                if (ImGui.Button("Update Camera Bounds"))
+                {
+                    UpdateCameraBoundsRequested?.Invoke(this, EventArgs.Empty);
+                }
+
                 ImGui.Separator();
 
-                if (ImGui.BeginMenu("Controls"))
+                if (ImGui.BeginMenu("Camera Controls"))
                 {
                     ImGui.Text("Move Around: up, down, left, right, or click + drag with the mouse");
                     ImGui.Text("Zoom: page up, page down, or the mouse scroll wheel");
                     ImGui.Text("Horizontal field of view: insert or delete");
                     ImGui.Text("Vertical field of view: home or end");
+                    ImGui.Text("Reset camera and field of view: backspace");
                     
                     ImGui.EndMenu();
                 }
