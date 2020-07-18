@@ -139,7 +139,7 @@ namespace SharpPlotter.Scripting
                 
                 _onScreenLogger.LogMessage(content);
             }
-            catch (GraphedItems.PointConversionException exception)
+            catch (PointConversionException exception)
             {
                 _onScreenLogger.LogMessage(exception.Message);
             }

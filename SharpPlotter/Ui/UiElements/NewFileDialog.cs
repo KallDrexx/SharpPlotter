@@ -55,7 +55,7 @@ namespace SharpPlotter.Ui.UiElements
                     0 => ScriptLanguage.CSharp,
                     1 => ScriptLanguage.Javascript,
                     2 => ScriptLanguage.Python,
-                    _ => null
+                    _ => (ScriptLanguage?) null
                 };
 
                 if (!string.IsNullOrWhiteSpace(ErrorText))

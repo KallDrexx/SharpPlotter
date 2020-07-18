@@ -35,123 +35,32 @@ namespace SharpPlotter
         /// the list of items to render is retrieved.
         /// </summary>
         public bool ItemsChangedSinceLastRender { get; private set; }
-        
+
         /// <summary>
-        /// Add points to the graph. This allows for multiple combinations of items to be passed in.  This is needed to
-        /// facilitate some scripting engines, such as Javascript.  Each point may be represented via
-        /// * Float, double, or int 2 item tuples - [(1,2)]
-        /// * 2 element array of int, double, or float where the first item is X and the second is Y - [[1,2]]
-        /// * Point2d
-        /// * An object with an X and Y property - [{x:1,y:2}]
-        ///
-        /// If the first object in the collection is an XNA Color value, than that color will be applied to every
-        /// point that gets rendered, otherwise all points will be white.
-        ///
-        /// Any other value will thrown an exception
+        /// Adds points to the graph set to the specified color
         /// </summary>
-        public void Points(params object[] points)
+        public void AddPoints(Color color, IEnumerable<Point2d> points)
         {
-            points ??= Array.Empty<object>();
-            if (!points.Any())
-            {
-                return;
-            }
-
-            var color = Color.White;
-            if (points[0] is Color passedInColor)
-            {
-                color = passedInColor;
-                
-                // With some scripting engines, like JInt, if both a color and an array is passed in than the array
-                // will be passed in as it's own `object[]` in `points[1]`.  So we need to disambiguate that 
-                // if possible.  However, we do need to be careful that `points[1]` isn't an `object[]` due to 
-                // a function call like `Points(Color.Red, [1, 2])` which is valid.
-                if (points.Length > 1 && points[1] is object[] objArray)
-                {
-                    if (objArray.Length == 2 && (objArray[0] is double || objArray[0] is int || objArray[0] is float))
-                    {
-                        // Do not expand this
-                        points = points.Skip(1).ToArray();
-                    }
-                    else
-                    {
-                        points = objArray;
-                    }
-                }
-                else
-                {
-                    points = points.Skip(1).ToArray();
-                }
-            }
-
-            foreach (var pointObject in points)
-            {
-                var point = ConvertObjectToPoint2d(pointObject);
-                _points.Add(new RenderedPoint(point, color));
-            }
+            points ??= Array.Empty<Point2d>();
             
+            _points.AddRange(points.Select(x => new RenderedPoint(x, color)));
             GraphItemsUpdated();
         }
 
-        /// <summary>
-        /// Add segments to the graph.  This allows for multiple combinations of items to be passed in.  This is
-        /// needed to facilitate some scripting engines, such as Javascript.  Each point may be represented via
-        /// * Float, double, or int 2 item tuples - [(1,2)]
-        /// * 2 element array of int, double, or float where the first item is X and the second is Y - [[1,2]]
-        /// * Point2d
-        /// * An object with an X and Y property - [{x:1,y:2}]
-        ///
-        /// Any other value will thrown an exception
-        /// </summary>
-        public void Segments(params object[] points)
+        public void AddSegments(Color color, IEnumerable<Point2d> points)
         {
-            points ??= Array.Empty<object>();
-            if (!points.Any())
-            {
-                return;
-            }
+            points ??= Array.Empty<Point2d>();
 
-            var color = Color.White;
-            if (points[0] is Color passedInColor)
-            {
-                color = passedInColor;
-                
-                // With some scripting engines, like JInt, if both a color and an array is passed in than the array
-                // will be passed in as it's own `object[]` in `points[1]`.  So we need to disambiguate that 
-                // if possible.  However, we do need to be careful that `points[1]` isn't an `object[]` due to 
-                // a function call like `Points(Color.Red, [1, 2])` which is valid.
-                if (points.Length > 1 && points[1] is object[] objArray)
-                {
-                    if (objArray.Length == 2 && (objArray[0] is double || objArray[0] is int || objArray[0] is float))
-                    {
-                        // Do not expand this
-                        points = points.Skip(1).ToArray();
-                    }
-                    else
-                    {
-                        points = objArray;
-                    }
-                }
-                else
-                {
-                    points = points.Skip(1).ToArray();
-                }
-            }
-            
             var lastPoint = (Point2d?) null;
-            for (var index = 0; index < points.Length; index++)
+            foreach (var point in points)
             {
-                var point = ConvertObjectToPoint2d(points[index]);
-
                 if (lastPoint != null)
                 {
-                    var start = lastPoint.Value;
-                    var end = point;
-                    _segments.Add(new RenderedSegment(start, end, color));
+                    _segments.Add(new RenderedSegment(lastPoint.Value, point, color));
                 }
-                
+
                 lastPoint = point;
-            }
+            };
             
             GraphItemsUpdated();
         }
@@ -263,7 +172,7 @@ namespace SharpPlotter
                             int intVal => intVal,
                             float floatVal => floatVal,
                             double doubleVal => (float) doubleVal,
-                            _ => null
+                            _ => (float?) null
                         };
                     }
                     
@@ -274,7 +183,7 @@ namespace SharpPlotter
                             int intVal => intVal,
                             float floatVal => floatVal,
                             double doubleVal => (float) doubleVal,
-                            _ => null
+                            _ => (float?) null
                         };
                     }
                 }
@@ -287,14 +196,6 @@ namespace SharpPlotter
 
             var json = JsonConvert.SerializeObject(obj);
             throw new PointConversionException($"Cannot convert object to a point: '{json}'");
-        }
-
-        internal class PointConversionException : Exception
-        {
-            public PointConversionException(string message) : base(message)
-            {
-                
-            }
         }
     }
 }
