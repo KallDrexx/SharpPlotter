@@ -3,18 +3,21 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SharpPlotter.Scripting
 {
     public class ScriptManager
     {
+        private readonly SemaphoreSlim _fileWatcherSemaphore = new SemaphoreSlim(1, 1);
         private readonly ConcurrentQueue<string> _waitingScriptContent = new ConcurrentQueue<string>();
         private readonly AppSettings _appSettings;
         private readonly OnScreenLogger _onScreenLogger;
         private readonly FileSystemWatcher _fileSystemWatcher;
 
         private IScriptRunner _scriptRunner;
+        private DateTime _lastScriptChangedEventFiredAt = DateTime.Now;
 
         public string CurrentFileName { get; private set; }
         public ScriptLanguage? CurrentLanguage { get; private set; }
@@ -180,37 +183,54 @@ namespace SharpPlotter.Scripting
         {
             Task.Run(async () =>
             {
-                // This sometimes triggers too soon while the other application is still writing, and thus the other
-                // application will have the file locked.  So we need to retry a few times until we are allowed
-                // to open it.
-                const int maxRetry = 10;
-                var retryCount = 0;
-                while (true)
+                try
                 {
-                    try
+                    await _fileWatcherSemaphore.WaitAsync();
+                    var timeSinceLastTriggered = DateTime.Now - _lastScriptChangedEventFiredAt;
+                    if (timeSinceLastTriggered.TotalSeconds < 1)
                     {
-                        var script = await File.ReadAllTextAsync(e.FullPath);
-                        _waitingScriptContent.Enqueue(script);
+                        // Don't react if this is triggered too much.
                         return;
                     }
-                    catch (IOException exception)
+                
+                    // This sometimes triggers too soon while the other application is still writing, and thus the other
+                    // application will have the file locked.  So we need to retry a few times until we are allowed
+                    // to open it.
+                    const int maxRetry = 10;
+                    var retryCount = 0;
+                    while (true)
                     {
-                        if (retryCount >= maxRetry)
+                        try
                         {
-                            _onScreenLogger.LogMessage(
-                                $"Failed to load changes from current file {maxRetry} times:\n{exception}");
-
+                            var script = await File.ReadAllTextAsync(e.FullPath);
+                            _waitingScriptContent.Enqueue(script);
+                            _lastScriptChangedEventFiredAt = DateTime.Now;
+                            
                             return;
                         }
-                    }
-                    catch (Exception exception)
-                    {
-                        _onScreenLogger.LogMessage($"Failed to read from current file:\n{exception}");
-                        return;
-                    }
+                        catch (IOException exception)
+                        {
+                            if (retryCount >= maxRetry)
+                            {
+                                _onScreenLogger.LogMessage(
+                                    $"Failed to load changes from current file {maxRetry} times:\n{exception}");
 
-                    await Task.Delay(10);
-                    retryCount++;
+                                return;
+                            }
+                        }
+                        catch (Exception exception)
+                        {
+                            _onScreenLogger.LogMessage($"Failed to read from current file:\n{exception}");
+                            return;
+                        }
+
+                        await Task.Delay(100);
+                        retryCount++;
+                    }
+                }
+                finally
+                {
+                    _fileWatcherSemaphore.Release();
                 }
             });
         }
