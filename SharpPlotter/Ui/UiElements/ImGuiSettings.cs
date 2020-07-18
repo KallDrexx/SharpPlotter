@@ -7,7 +7,7 @@ namespace SharpPlotter.Ui.UiElements
     {
         protected override void CustomRender()
         {
-            ImGui.GetIO().FontGlobalScale = 1.10f;
+            ImGui.GetIO().FontGlobalScale = 1.20f;
         }
     }
 }

@@ -38,8 +38,16 @@ namespace SharpPlotter.MonoGame
             };
 
             IsMouseVisible = true;
+            
+            _appSettings = SettingsIo.Load() ?? new AppSettings
+            {
+                ScriptFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal),
+                    "SharpPlotter"),
+                TextEditorExecutable = "code",
+            };
+            
             _onScreenLogger = new OnScreenLogger();
-            _onScreenLogger.LogMessage("Use the file menu above to create a new script, or to open an existing one");
+            _onScreenLogger.LogMessage(OnLoadText());
 
             _camera = new Camera(Width, Height, _onScreenLogger);
             _graphedItems = new GraphedItems();
@@ -47,13 +55,6 @@ namespace SharpPlotter.MonoGame
             // Do a first render to get pixel data from the image for initial byte data allocation
             using var image = _camera.Render(null, null);
             _rawCanvasPixels = new byte[image.Height * image.PeekPixels().RowBytes];
-
-            _appSettings = SettingsIo.Load() ?? new AppSettings
-            {
-                ScriptFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal),
-                    "SharpPlotter"),
-                TextEditorExecutable = "code",
-            };
 
             _scriptManager = new ScriptManager(_appSettings, _onScreenLogger);
         }
@@ -166,6 +167,16 @@ namespace SharpPlotter.MonoGame
             var y = ((int) _plotterUi.AppToolbar.CameraMinBounds.Y, (int) _plotterUi.AppToolbar.CameraMaxBounds.Y);
 
             _camera.SetGraphBounds(x, y);
+        }
+
+        private string OnLoadText()
+        {
+            return $"Welcome to SharpPlotter!{Environment.NewLine}{Environment.NewLine}" +
+                   $"SharpPlotter allows drawing points and lines in real-time using standard programming languages, using " +
+                   $"any code editor you prefer.{Environment.NewLine}{Environment.NewLine}" +
+                   $"To start, use the File menu above to create a new script, or to open an existing one. {Environment.NewLine}{Environment.NewLine}" +
+                   $"Scripts Directory: {_appSettings.ScriptFolderPath}{Environment.NewLine}" +
+                   $"Text Editor Executable: {_appSettings.TextEditorExecutable}{Environment.NewLine}";
         }
     }
 }
