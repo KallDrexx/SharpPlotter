@@ -131,6 +131,7 @@ namespace SharpPlotter.Ui.UiElements
                     var languageName = _scriptManager.CurrentLanguage.Value switch
                     {
                         ScriptLanguage.CSharp => "C#",
+                        ScriptLanguage.Javascript => "Javascript",
                         _ => ""
                     };
                     

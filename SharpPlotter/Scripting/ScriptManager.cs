@@ -41,6 +41,7 @@ namespace SharpPlotter.Scripting
             var expectedExtension = language switch
             {
                 ScriptLanguage.CSharp => ".cs",
+                ScriptLanguage.Javascript => ".js",
                 null => throw new InvalidOperationException($"A language is required"),
                 _ => throw new NotSupportedException($"Language '{language}' is not supported")
             };
@@ -77,6 +78,7 @@ namespace SharpPlotter.Scripting
             var language = extension?.ToLower() switch
             {
                 ".cs" => ScriptLanguage.CSharp,
+                ".js" => ScriptLanguage.Javascript,
                 _ => throw new NotSupportedException($"No scripting language could be found for extension '{extension}'")
             };
 
@@ -156,6 +158,7 @@ namespace SharpPlotter.Scripting
             _scriptRunner = CurrentLanguage switch
             {
                 ScriptLanguage.CSharp => new CSharpScriptRunner(),
+                ScriptLanguage.Javascript => new JavascriptRunner(),
                 _ => throw new NotSupportedException($"No script runner for script of type '{CurrentLanguage}'")
             };
 

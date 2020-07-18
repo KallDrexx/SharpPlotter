@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using Microsoft.Xna.Framework;
+using Newtonsoft.Json;
 using SharpPlotter.Rendering;
 
 namespace SharpPlotter
@@ -32,126 +34,118 @@ namespace SharpPlotter
         /// the list of items to render is retrieved.
         /// </summary>
         public bool ItemsChangedSinceLastRender { get; private set; }
-
-        /// <summary>
-        /// Add white points via tuples
-        /// </summary>
-        public void Points(params (float x, float y)[] points)
-        {
-            Points(Color.White, points);
-        }
-
-        /// <summary>
-        /// Add colored points via tuples
-        /// </summary>
-        public void Points(Color color, params (float x, float y)[] points)
-        {
-            points ??= Array.Empty<(float, float)>();
-            foreach (var (x, y) in points)
-            {
-                _points.Add(new RenderedPoint(new Point2d(x, y), color));
-            }
-            
-            GraphItemsUpdated();
-        }
-
-        /// <summary>
-        /// Add white points via a 2 dimensional array.  Each inner array is expected to be 2 floats.  For example,
-        /// adding the points 1,1 and 2,2 would be [[1,1], [2,2]].  This should make interacting via javascript easier.
-        /// </summary>
-        public void Points(params float[][] points)
-        {
-            Points(Color.White, points);
-        }
         
         /// <summary>
-        /// Add white points via a 2 dimensional array.  Each inner array is expected to be 2 floats.  For example,
-        /// adding the points 1,1 and 2,2 would be [[1,1], [2,2]].  This should make interacting via javascript easier.
+        /// Add points to the graph. This allows for multiple combinations of items to be passed in.  This is needed to
+        /// facilitate some scripting engines, such as Javascript.  Each point may be represented via
+        /// * Float, double, or int 2 item tuples - [(1,2)]
+        /// * 2 element array of int, double, or float where the first item is X and the second is Y - [[1,2]]
+        /// * Point2d
+        /// * An object with an X and Y property - [{x:1,y:2}]
+        ///
+        /// If the first object in the collection is an XNA Color value, than that color will be applied to every
+        /// point that gets rendered, otherwise all points will be white.
+        ///
+        /// Any other value will thrown an exception
         /// </summary>
-        public void Points(Color color, params float[][] points)
+        public void Points(params object[] points)
         {
-            points ??= Array.Empty<float[]>();
-            for (var index = 0; index < points.Length; index++)
+            points ??= Array.Empty<object>();
+            if (!points.Any())
             {
-                var point = points[index] ?? Array.Empty<float>();
-                if (point.Length != 2)
-                {
-                    var message = $"Expected point {index + 1} to have 2 items, but {point.Length} were found";
-                    throw new ArgumentException(message);
-                }
+                return;
+            }
+
+            var color = Color.White;
+            if (points[0] is Color passedInColor)
+            {
+                color = passedInColor;
                 
-                _points.Add(new RenderedPoint(new Point2d(point[0], point[1]), color));
-            }
-            
-            GraphItemsUpdated();
-        }
-        
-        /// <summary>
-        /// Add continuous white line segments via tuples of points
-        /// </summary>
-        public void Segments(params (float x, float y)[] points)
-        {
-            Segments(Color.White, points);
-        }
-
-        /// <summary>
-        /// Add continuous colored line segments via tuples of points
-        /// </summary>
-        public void Segments(Color color, params (float x, float y)[] points)
-        {
-            points ??= Array.Empty<(float, float)>();
-            if (points.Length < 2)
-            {
-                return; // Can't draw a line segment without at least two points
-            }
-            
-            var lastPoint = ((float x, float y)?) null;
-            foreach (var point in points)
-            {
-                if (lastPoint != null)
+                // With some scripting engines, like JInt, if both a color and an array is passed in than the array
+                // will be passed in as it's own `object[]` in `points[1]`.  So we need to disambiguate that 
+                // if possible.  However, we do need to be careful that `points[1]` isn't an `object[]` due to 
+                // a function call like `Points(Color.Red, [1, 2])` which is valid.
+                if (points.Length > 1 && points[1] is object[] objArray)
                 {
-                    _segments.Add(new RenderedSegment(lastPoint.Value, point, color));
+                    if (objArray.Length == 2 && (objArray[0] is double || objArray[0] is int || objArray[0] is float))
+                    {
+                        // Do not expand this
+                        points = points.Skip(1).ToArray();
+                    }
+                    else
+                    {
+                        points = objArray;
+                    }
                 }
+                else
+                {
+                    points = points.Skip(1).ToArray();
+                }
+            }
 
-                lastPoint = point;
+            foreach (var pointObject in points)
+            {
+                var point = ConvertObjectToPoint2d(pointObject);
+                _points.Add(new RenderedPoint(point, color));
             }
             
             GraphItemsUpdated();
         }
 
         /// <summary>
-        /// Add white segments via a 2 dimensional array of points.  Each inner array is expected to be 2 floats.
-        /// For example,  adding the points 1,1 and 2,2 would be [[1,1], [2,2]].  This should make method calls from
-        /// javascript easier
+        /// Add segments to the graph.  This allows for multiple combinations of items to be passed in.  This is
+        /// needed to facilitate some scripting engines, such as Javascript.  Each point may be represented via
+        /// * Float, double, or int 2 item tuples - [(1,2)]
+        /// * 2 element array of int, double, or float where the first item is X and the second is Y - [[1,2]]
+        /// * Point2d
+        /// * An object with an X and Y property - [{x:1,y:2}]
+        ///
+        /// Any other value will thrown an exception
         /// </summary>
-        public void Segments(params float[][] points)
+        public void Segments(params object[] points)
         {
-            Segments(Color.White, points);
-        }
-        
-        /// <summary>
-        /// Add colored segments via a 2 dimensional array of points.  Each inner array is expected to be 2 floats.
-        /// For example,  adding the points 1,1 and 2,2 would be [[1,1], [2,2]].  This should make method calls from
-        /// javascript easier
-        /// </summary>
-        public void Segments(Color color, params float[][] points)
-        {
-            points ??= Array.Empty<float[]>();
+            points ??= Array.Empty<object>();
+            if (!points.Any())
+            {
+                return;
+            }
 
-            var lastPoint = (float[]) null;
+            var color = Color.White;
+            if (points[0] is Color passedInColor)
+            {
+                color = passedInColor;
+                
+                // With some scripting engines, like JInt, if both a color and an array is passed in than the array
+                // will be passed in as it's own `object[]` in `points[1]`.  So we need to disambiguate that 
+                // if possible.  However, we do need to be careful that `points[1]` isn't an `object[]` due to 
+                // a function call like `Points(Color.Red, [1, 2])` which is valid.
+                if (points.Length > 1 && points[1] is object[] objArray)
+                {
+                    if (objArray.Length == 2 && (objArray[0] is double || objArray[0] is int || objArray[0] is float))
+                    {
+                        // Do not expand this
+                        points = points.Skip(1).ToArray();
+                    }
+                    else
+                    {
+                        points = objArray;
+                    }
+                }
+                else
+                {
+                    points = points.Skip(1).ToArray();
+                }
+            }
+            
+            var lastPoint = (Point2d?) null;
             for (var index = 0; index < points.Length; index++)
             {
-                var point = points[index] ?? Array.Empty<float>();
-                if (point.Length != 2)
-                {
-                    var message = $"Expected point {index + 1} to have 2 items, but {point.Length} were found";
-                    throw new ArgumentException(message);
-                }
+                var point = ConvertObjectToPoint2d(points[index]);
 
                 if (lastPoint != null)
                 {
-                    var start = new Point2d(lastPoint[0], lastPoint[1]);
-                    var end = new Point2d(point[0], point[1]);
+                    var start = lastPoint.Value;
+                    var end = point;
                     _segments.Add(new RenderedSegment(start, end, color));
                 }
                 
@@ -203,6 +197,84 @@ namespace SharpPlotter
                 MinCoordinates = null;
                 MaxCoordinates = null;
             }
+        }
+
+        private Point2d ConvertObjectToPoint2d(object obj)
+        {
+            if (obj == null)
+            {
+                throw new ArgumentException("Cannot convert `null` to a valid point");
+            }
+
+            if (obj is Point2d point)
+            {
+                return point;
+            }
+
+            if (obj is ValueTuple<int, int> intTuple)
+            {
+                return new Point2d(intTuple.Item1, intTuple.Item2);
+            }
+
+            if (obj is ValueTuple<double, double> doubleTuple)
+            {
+                return new Point2d((float) doubleTuple.Item1, (float) doubleTuple.Item2);
+            }
+
+            if (obj is ValueTuple<float, float> floatTuple)
+            {
+                return new Point2d(floatTuple.Item1, floatTuple.Item2);
+            }
+
+            if (obj is object[] objArray && 
+                objArray.Length == 2 &&
+                (objArray[0] is float || objArray[0] is int || objArray[0] is double) &&
+                (objArray[1] is float || objArray[1] is int || objArray[1] is double))
+            {
+                var x = (float) Convert.ToDouble(objArray[0]);
+                var y = (float) Convert.ToDouble(objArray[1]);
+                
+                return new Point2d(x, y);
+            }
+
+            if (obj is ExpandoObject expandoObject)
+            {
+                var x = (float?) null;
+                var y = (float?) null;
+                
+                foreach (var (key, value) in expandoObject)
+                {
+                    if (key.Equals("x", StringComparison.OrdinalIgnoreCase))
+                    {
+                        x = value switch
+                        {
+                            int intVal => intVal,
+                            float floatVal => floatVal,
+                            double doubleVal => (float) doubleVal,
+                            _ => null
+                        };
+                    }
+                    
+                    if (key.Equals("y", StringComparison.OrdinalIgnoreCase))
+                    {
+                        y = value switch
+                        {
+                            int intVal => intVal,
+                            float floatVal => floatVal,
+                            double doubleVal => (float) doubleVal,
+                            _ => null
+                        };
+                    }
+                }
+
+                if (x != null && y != null)
+                {
+                    return new Point2d(x.Value, y.Value);
+                }
+            }
+
+            var json = JsonConvert.SerializeObject(obj);
+            throw new ArgumentException($"Cannot convert object to a point: '{json}'");
         }
     }
 }

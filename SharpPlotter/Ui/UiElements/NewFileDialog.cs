@@ -7,7 +7,8 @@ namespace SharpPlotter.Ui.UiElements
 {
     public class NewFileDialog : ImGuiElement
     {
-        private static readonly string[] LanguageOptions = new[] {"C#"};
+        private static readonly string[] LanguageOptions = {"C#", "Javascript"};
+        private int _selectedLanguageIndex;
         
         public event EventHandler CreateFileRequested;
         
@@ -47,11 +48,12 @@ namespace SharpPlotter.Ui.UiElements
                 ImGui.PushItemWidth(500f);
                 InputText(nameof(FileName), "File Name");
 
-                var selectedIndex = 0;
-                ImGui.Combo("Scripting Language", ref selectedIndex, LanguageOptions, LanguageOptions.Length);
-                SelectedLanguage = selectedIndex switch
+                
+                ImGui.Combo("Scripting Language", ref _selectedLanguageIndex, LanguageOptions, LanguageOptions.Length);
+                SelectedLanguage = _selectedLanguageIndex switch
                 {
-                    0 => (ScriptLanguage?) ScriptLanguage.CSharp,
+                    0 => ScriptLanguage.CSharp,
+                    1 => ScriptLanguage.Javascript,
                     _ => null
                 };
 
