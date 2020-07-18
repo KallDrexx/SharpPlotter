@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
@@ -6,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using SharpPlotter.Rendering;
 using SharpPlotter.Scripting;
 using SharpPlotter.Ui;
+using SharpPlotter.Ui.UiElements;
 using SkiaSharp;
 
 namespace SharpPlotter.MonoGame
@@ -26,6 +28,7 @@ namespace SharpPlotter.MonoGame
         private InputHandler _inputHandler;
         private PlotterUi _plotterUi;
         private bool _resetCameraRequested;
+        private bool _ignoreAppToolbarPropertiesChanged;
 
         public App()
         {
@@ -38,7 +41,10 @@ namespace SharpPlotter.MonoGame
             };
 
             IsMouseVisible = true;
-            _camera = new Camera(Width, Height);
+            _onScreenLogger = new OnScreenLogger();
+            _onScreenLogger.LogMessage("Use the file menu above to create a new script, or to open an existing one");
+            
+            _camera = new Camera(Width, Height, _onScreenLogger);
             _graphedItems = new GraphedItems();
 
             // Do a first render to get pixel data from the image for initial byte data allocation
@@ -51,18 +57,19 @@ namespace SharpPlotter.MonoGame
                 TextEditorExecutable = "code",
             };
 
-            _onScreenLogger = new OnScreenLogger();
-            _onScreenLogger.LogMessage("Use the file menu above to create a new script, or to open an existing one");
-            
             _scriptManager = new ScriptManager(_appSettings, _onScreenLogger);
         }
 
         protected override void Initialize()
         {
             _plotterUi = new PlotterUi(this, _appSettings, _scriptManager, _onScreenLogger);
+            _plotterUi.AppToolbar.PropertyChanged += AppToolbarOnPropertyChanged;
+            
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _inputHandler = new InputHandler(_camera, _plotterUi);
             _inputHandler.ResetCameraRequested += (sender, args) => _resetCameraRequested = true;
+            
+            UpdateToolbarWithCameraProperties();
 
             base.Initialize();
         }
@@ -75,6 +82,11 @@ namespace SharpPlotter.MonoGame
             {
                 SetCameraToSizeOfGraphedItems();
                 _resetCameraRequested = false;
+            }
+
+            if (_camera.CameraHasMoved)
+            {
+                UpdateToolbarWithCameraProperties();
             }
 
             var newGraphedItems = _scriptManager.CheckForNewGraphedItems();
@@ -133,6 +145,38 @@ namespace SharpPlotter.MonoGame
                 var x = ((int) minCoords.Value.X, (int) maxCoords.Value.X);
                 var y = ((int) minCoords.Value.Y, (int) maxCoords.Value.Y);
                 _camera.SetGraphBounds(x, y);
+            }
+        }
+
+        private void UpdateToolbarWithCameraProperties()
+        {
+            _ignoreAppToolbarPropertiesChanged = true;
+            _plotterUi.AppToolbar.CameraOrigin = _camera.Origin;
+            _plotterUi.AppToolbar.CameraMinBounds = _camera.MinimumGraphBounds;
+            _plotterUi.AppToolbar.CameraMaxBounds = _camera.MaximumGraphBounds;
+            _ignoreAppToolbarPropertiesChanged = false;
+        }
+
+        private void AppToolbarOnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (_ignoreAppToolbarPropertiesChanged)
+            {
+                return;
+            }
+
+            switch (e.PropertyName)
+            {
+                case nameof(AppToolbar.CameraOrigin):
+                    _camera.Origin = _plotterUi.AppToolbar.CameraOrigin;
+                    break;
+                
+                case nameof(AppToolbar.CameraMinBounds):
+                case nameof(AppToolbar.CameraMaxBounds):
+                    var x = ((int) _plotterUi.AppToolbar.CameraMinBounds.X, (int) _plotterUi.AppToolbar.CameraMaxBounds.X);
+                    var y = ((int) _plotterUi.AppToolbar.CameraMinBounds.Y, (int) _plotterUi.AppToolbar.CameraMaxBounds.Y);
+                    
+                    _camera.SetGraphBounds(x, y);
+                    break;
             }
         }
     }

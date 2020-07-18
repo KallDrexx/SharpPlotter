@@ -29,6 +29,7 @@ namespace SharpPlotter.Rendering
         /// </summary>
         private const int StandardPixelsPerGraphUnit = 90;
 
+        private readonly OnScreenLogger _onScreenLogger;
         private readonly SKSurface _surface;
         private readonly int _width, _height, _usableWidth, _usableHeight;
         private int _basePixelsPerXUnit, _basePixelsPerYUnit;
@@ -45,6 +46,7 @@ namespace SharpPlotter.Rendering
             {
                 _origin = value;
                 CameraHasMoved = true;
+                RecalculateGraphBounds();
             }
         }
 
@@ -63,9 +65,20 @@ namespace SharpPlotter.Rendering
                 {
                     _zoomFactor = value;
                     CameraHasMoved = true;
+                    RecalculateGraphBounds();
                 }
             }
         }
+        
+        /// <summary>
+        /// the smallest X and Y graph values on the visible portion of the graph
+        /// </summary>
+        public Point2d MinimumGraphBounds { get; private set; }
+        
+        /// <summary>
+        /// The largest X and Y graph values on the visible portion of the graph
+        /// </summary>
+        public Point2d MaximumGraphBounds { get; private set; }
         
         /// <summary>
         /// If true than that means the camera is either in a new position or the zoom factor has changed.  This helps
@@ -73,11 +86,12 @@ namespace SharpPlotter.Rendering
         /// </summary>
         public bool CameraHasMoved { get; private set; }
 
-        public Camera(int width, int height)
+        public Camera(int width, int height, OnScreenLogger onScreenLogger)
         {
             _width = width;
             _usableWidth = width - GridLineMargin * 2;
             _height = height;
+            _onScreenLogger = onScreenLogger;
             _usableHeight = height - GridLineMargin * 2;
 
             var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
@@ -134,10 +148,12 @@ namespace SharpPlotter.Rendering
         /// </summary>
         public void SetGraphBounds((int min, int max) x, (int min, int max) y)
         {
-            if (x.min >= x.max || y.min >= x.max)
+            if (x.min >= x.max || y.min >= y.max)
             {
                 var message = $"Invalid graph boundaries specified: X={x.min}/{x.max}, y={y.min}/{y.max}";
-                throw new ArgumentException(message);
+                _onScreenLogger.LogMessage(message);
+
+                return;
             }
 
             // Without a buffer the points around the edge are right up against the edge of the canvas, which makes
@@ -196,6 +212,21 @@ namespace SharpPlotter.Rendering
             CameraHasMoved = false;
             
             return _surface.Snapshot();
+        }
+
+        private void RecalculateGraphBounds()
+        {
+            var zoomedPixelsPerXUnit = _basePixelsPerXUnit * ZoomFactor;
+            var zoomedPixelsPerYUnit = _basePixelsPerYUnit * ZoomFactor;
+            var horizontalGraphValueCount = (int)(_usableWidth / zoomedPixelsPerXUnit);
+            var verticalGraphValueCount = (int) (_usableHeight / zoomedPixelsPerYUnit);
+            var minimumHorizontalGraphValue = (int) Math.Floor(Origin.X - (float) horizontalGraphValueCount / 2);
+            var maximumHorizontalGraphValue = (int) Math.Ceiling(Origin.X + (float) horizontalGraphValueCount / 2);
+            var minimumVerticalGraphValue = (int) Math.Floor(Origin.Y - (float) verticalGraphValueCount / 2);
+            var maximumVerticalGraphValue = (int) Math.Ceiling(Origin.Y + (float) verticalGraphValueCount / 2);
+            
+            MinimumGraphBounds = new Point2d(minimumHorizontalGraphValue, minimumVerticalGraphValue);
+            MaximumGraphBounds = new Point2d(maximumHorizontalGraphValue, maximumVerticalGraphValue);
         }
 
         private void RenderGridLines()

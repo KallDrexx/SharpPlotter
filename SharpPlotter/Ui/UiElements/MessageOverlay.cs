@@ -31,13 +31,12 @@ namespace SharpPlotter.Ui.UiElements
                 _center = new Vector2(ImGui.GetIO().DisplaySize.X * 0.5f, ImGui.GetIO().DisplaySize.Y * 0.5f);
                 _pivot = new Vector2(0.5f, 0.5f);
             }
-            
+
             ImGui.SetNextWindowPos(new Vector2(0, 18));
             ImGui.SetNextWindowSize(new Vector2(ImGui.GetIO().DisplaySize.X, 0));
             const ImGuiWindowFlags flags = ImGuiWindowFlags.NoCollapse |
                                            ImGuiWindowFlags.NoDecoration |
                                            ImGuiWindowFlags.NoSavedSettings |
-                                           ImGuiWindowFlags.NoFocusOnAppearing |
                                            ImGuiWindowFlags.NoMove;
 
             if (ImGui.Begin($"Message", flags))
