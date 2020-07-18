@@ -10,14 +10,13 @@ namespace SharpPlotter.Scripting
 {
     public class ScriptManager
     {
-        private readonly SemaphoreSlim _fileWatcherSemaphore = new SemaphoreSlim(1, 1);
-        private readonly ConcurrentQueue<string> _waitingScriptContent = new ConcurrentQueue<string>();
         private readonly AppSettings _appSettings;
         private readonly OnScreenLogger _onScreenLogger;
         private readonly FileSystemWatcher _fileSystemWatcher;
-
         private IScriptRunner _scriptRunner;
-        private DateTime _lastScriptChangedEventFiredAt = DateTime.Now;
+        
+        private long _lastScriptChangedEventFiredAt;
+        private long _lastProcessedScriptChangedEvent;
 
         public string CurrentFileName { get; private set; }
         public ScriptLanguage? CurrentLanguage { get; private set; }
@@ -102,50 +101,52 @@ namespace SharpPlotter.Scripting
 
         public GraphedItems CheckForNewGraphedItems()
         {
-            if (!_waitingScriptContent.Any())
+            if (_lastScriptChangedEventFiredAt > _lastProcessedScriptChangedEvent)
             {
-                return null;
-            }
-            
-            // We only care about the latest changes waiting to be run
-            var scriptContent = (string) null;
-            while (_waitingScriptContent.TryDequeue(out var content))
-            {
-                // We want to make sure only to rewrite `scriptContent` if the dequeue was successful, if we try
-                // to use `content` below it will always be null, since the last time this gets called it will
-                // always return null.
-                scriptContent = content;
-            }
-
-            try
-            {
-                _onScreenLogger.Clear();
-                return _scriptRunner.RunScript(scriptContent);
-            }
-            catch (ScriptException exception)
-            {
-                var content = "Failed to run script:\n\n";
-                
-                if (exception.ShowStackTrace)
+                // Only actually read the latest script file contents after a period of time since the
+                // last change event fired.  This prevents reading while it's still being written, and should
+                // help with file lock contention.
+                var lastFiredAtTicks = _lastScriptChangedEventFiredAt;
+                var lastFiredAt = new DateTime(lastFiredAtTicks);
+                if ((DateTime.Now - lastFiredAt).TotalMilliseconds > 200)
                 {
-                    // ReSharper disable once PossibleNullReferenceException
-                    content += exception.InnerException.ToString();
-                }
-                else
-                {
-                    // ReSharper disable once PossibleNullReferenceException
-                    content += $"{exception.Message}: {exception.InnerException.Message}";
-                }
+                    var contents = TryLoadFileContents();
+                    if (contents != null)
+                    {
+                        Interlocked.Exchange(ref _lastProcessedScriptChangedEvent, lastFiredAtTicks);
+                        
+                        try
+                        {
+                            _onScreenLogger.Clear();
+                            return _scriptRunner.RunScript(contents);
+                        }
+                        catch (ScriptException exception)
+                        {
+                            var content = "Failed to run script:\n\n";
                 
-                _onScreenLogger.LogMessage(content);
-            }
-            catch (PointConversionException exception)
-            {
-                _onScreenLogger.LogMessage(exception.Message);
-            }
-            catch (Exception exception)
-            {
-                _onScreenLogger.LogMessage($"Failed to run script:\n\n{exception}");
+                            if (exception.ShowStackTrace)
+                            {
+                                // ReSharper disable once PossibleNullReferenceException
+                                content += exception.InnerException.ToString();
+                            }
+                            else
+                            {
+                                // ReSharper disable once PossibleNullReferenceException
+                                content += $"{exception.Message}: {exception.InnerException.Message}";
+                            }
+                
+                            _onScreenLogger.LogMessage(content);
+                        }
+                        catch (PointConversionException exception)
+                        {
+                            _onScreenLogger.LogMessage(exception.Message);
+                        }
+                        catch (Exception exception)
+                        {
+                            _onScreenLogger.LogMessage($"Failed to run script:\n\n{exception}");
+                        }
+                    }
+                }
             }
             
             return null;
@@ -178,64 +179,30 @@ namespace SharpPlotter.Scripting
             _fileSystemWatcher.Filter = CurrentFileName;
             _fileSystemWatcher.EnableRaisingEvents = true;
 
-            var script = File.ReadAllText(Path.Combine(_appSettings.ScriptFolderPath, CurrentFileName));
-            _waitingScriptContent.Enqueue(script);
+            Interlocked.Exchange(ref _lastScriptChangedEventFiredAt, DateTime.Now.Ticks);
+        }
+
+        private string TryLoadFileContents()
+        {
+            try
+            {
+                var fullPath = Path.Combine(_appSettings.ScriptFolderPath, CurrentFileName);
+                return File.ReadAllText(fullPath);
+            }
+            catch (Exception exception)
+            {
+                _onScreenLogger.LogMessage($"Failed to read current script file:\n{exception}");
+                return null;
+            }
         }
 
         private void FileSystemWatcherOnChanged(object sender, FileSystemEventArgs e)
         {
-            Task.Run(async () =>
-            {
-                try
-                {
-                    await _fileWatcherSemaphore.WaitAsync();
-                    var timeSinceLastTriggered = DateTime.Now - _lastScriptChangedEventFiredAt;
-                    if (timeSinceLastTriggered.TotalSeconds < 1)
-                    {
-                        // Don't react if this is triggered too much.
-                        return;
-                    }
-                
-                    // This sometimes triggers too soon while the other application is still writing, and thus the other
-                    // application will have the file locked.  So we need to retry a few times until we are allowed
-                    // to open it.
-                    const int maxRetry = 10;
-                    var retryCount = 0;
-                    while (true)
-                    {
-                        try
-                        {
-                            var script = await File.ReadAllTextAsync(e.FullPath);
-                            _waitingScriptContent.Enqueue(script);
-                            _lastScriptChangedEventFiredAt = DateTime.Now;
-                            
-                            return;
-                        }
-                        catch (IOException exception)
-                        {
-                            if (retryCount >= maxRetry)
-                            {
-                                _onScreenLogger.LogMessage(
-                                    $"Failed to load changes from current file {maxRetry} times:\n{exception}");
-
-                                return;
-                            }
-                        }
-                        catch (Exception exception)
-                        {
-                            _onScreenLogger.LogMessage($"Failed to read from current file:\n{exception}");
-                            return;
-                        }
-
-                        await Task.Delay(100);
-                        retryCount++;
-                    }
-                }
-                finally
-                {
-                    _fileWatcherSemaphore.Release();
-                }
-            });
+            // We don't want to read the script immediately after this event triggers, as this event will 
+            // trigger multiple times while the file is being written to.  What we really want is to keep
+            // track when this event triggers and only read the script after a period of time where this 
+            // event has stopped triggering.
+            Interlocked.Exchange(ref _lastScriptChangedEventFiredAt, DateTime.Now.Ticks);
         }
     }
 }
