@@ -7,7 +7,7 @@ namespace SharpPlotter.Ui.UiElements
 {
     public class NewFileDialog : ImGuiElement
     {
-        private static readonly string[] LanguageOptions = {"C#", "Javascript"};
+        private static readonly string[] LanguageOptions = {"C#", "Javascript", "Python"};
         private int _selectedLanguageIndex;
         
         public event EventHandler CreateFileRequested;
@@ -54,6 +54,7 @@ namespace SharpPlotter.Ui.UiElements
                 {
                     0 => ScriptLanguage.CSharp,
                     1 => ScriptLanguage.Javascript,
+                    2 => ScriptLanguage.Python,
                     _ => null
                 };
 

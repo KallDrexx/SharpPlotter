@@ -45,6 +45,7 @@ namespace SharpPlotter.Scripting
             {
                 ScriptLanguage.CSharp => ".cs",
                 ScriptLanguage.Javascript => ".js",
+                ScriptLanguage.Python => ".py",
                 null => throw new InvalidOperationException($"A language is required"),
                 _ => throw new NotSupportedException($"Language '{language}' is not supported")
             };
@@ -82,6 +83,7 @@ namespace SharpPlotter.Scripting
             {
                 ".cs" => ScriptLanguage.CSharp,
                 ".js" => ScriptLanguage.Javascript,
+                ".py" => ScriptLanguage.Python,
                 _ => throw new NotSupportedException($"No scripting language could be found for extension '{extension}'")
             };
 
@@ -167,6 +169,7 @@ namespace SharpPlotter.Scripting
             {
                 ScriptLanguage.CSharp => new CSharpScriptRunner(),
                 ScriptLanguage.Javascript => new JavascriptRunner(),
+                ScriptLanguage.Python => new PythonScriptRunner(),
                 _ => throw new NotSupportedException($"No script runner for script of type '{CurrentLanguage}'")
             };
 

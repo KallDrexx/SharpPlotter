@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using IronPython.Runtime;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 using SharpPlotter.Rendering;
@@ -233,6 +234,17 @@ namespace SharpPlotter
             {
                 var x = (float) Convert.ToDouble(objArray[0]);
                 var y = (float) Convert.ToDouble(objArray[1]);
+                
+                return new Point2d(x, y);
+            }
+
+            if (obj is PythonTuple pythonTuple &&
+                pythonTuple.Count == 2 &&
+                (pythonTuple[0] is float || pythonTuple[0] is int || pythonTuple[0] is double) &&
+                (pythonTuple[1] is float || pythonTuple[1] is int || pythonTuple[1] is double))
+            {
+                var x = (float) Convert.ToDouble(pythonTuple[0]);
+                var y = (float) Convert.ToDouble(pythonTuple[1]);
                 
                 return new Point2d(x, y);
             }

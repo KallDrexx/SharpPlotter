@@ -7,11 +7,13 @@
 
     <ItemGroup>
       <PackageReference Include="ImGuiHandler.MonoGame" Version="1.0.0-preview6" />
+      <PackageReference Include="IronPython" Version="2.7.10" />
       <PackageReference Include="Jint" Version="3.0.0-beta-1828" />
       <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.6.0" />
       <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1375-develop" />
       <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
       <PackageReference Include="SkiaSharp" Version="2.80.0-preview.33" />
+      <PackageReference Include="System.CodeDom" Version="4.7.0" />
     </ItemGroup>
 
 </Project>

@@ -132,6 +132,7 @@ namespace SharpPlotter.Ui.UiElements
                     {
                         ScriptLanguage.CSharp => "C#",
                         ScriptLanguage.Javascript => "Javascript",
+                        ScriptLanguage.Python => "Python",
                         _ => ""
                     };
                     
