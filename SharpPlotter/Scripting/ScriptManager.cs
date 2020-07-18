@@ -114,6 +114,7 @@ namespace SharpPlotter.Scripting
 
             try
             {
+                _onScreenLogger.Clear();
                 return _scriptRunner.RunScript(scriptContent);
             }
             catch (ScriptException exception)
@@ -132,6 +133,10 @@ namespace SharpPlotter.Scripting
                 }
                 
                 _onScreenLogger.LogMessage(content);
+            }
+            catch (GraphedItems.PointConversionException exception)
+            {
+                _onScreenLogger.LogMessage(exception.Message);
             }
             catch (Exception exception)
             {

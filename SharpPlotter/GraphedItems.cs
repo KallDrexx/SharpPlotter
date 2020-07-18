@@ -203,7 +203,7 @@ namespace SharpPlotter
         {
             if (obj == null)
             {
-                throw new ArgumentException("Cannot convert `null` to a valid point");
+                throw new PointConversionException("Cannot convert `null` to a valid point");
             }
 
             if (obj is Point2d point)
@@ -274,7 +274,15 @@ namespace SharpPlotter
             }
 
             var json = JsonConvert.SerializeObject(obj);
-            throw new ArgumentException($"Cannot convert object to a point: '{json}'");
+            throw new PointConversionException($"Cannot convert object to a point: '{json}'");
+        }
+
+        internal class PointConversionException : Exception
+        {
+            public PointConversionException(string message) : base(message)
+            {
+                
+            }
         }
     }
 }
