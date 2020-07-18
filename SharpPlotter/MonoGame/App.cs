@@ -168,6 +168,7 @@ namespace SharpPlotter.MonoGame
             {
                 case nameof(AppToolbar.CameraOrigin):
                     _camera.Origin = _plotterUi.AppToolbar.CameraOrigin;
+                    UpdateToolbarWithCameraProperties();
                     break;
                 
                 case nameof(AppToolbar.CameraMinBounds):
@@ -176,6 +177,7 @@ namespace SharpPlotter.MonoGame
                     var y = ((int) _plotterUi.AppToolbar.CameraMinBounds.Y, (int) _plotterUi.AppToolbar.CameraMaxBounds.Y);
                     
                     _camera.SetGraphBounds(x, y);
+                    UpdateToolbarWithCameraProperties();
                     break;
             }
         }
