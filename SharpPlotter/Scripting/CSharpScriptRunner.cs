@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
@@ -57,16 +58,88 @@ namespace SharpPlotter.Scripting
                 _graphedItems = graphedItems;
             }
 
+            public void Points(IEnumerable<(int x, int y)> points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddPoints(Color.White, points.Select(p => new Point2d(p.x, p.y)));
+            }
+            
+            public void Points(Color color, IEnumerable<(int x, int y)> points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddPoints(color, points.Select(p => new Point2d(p.x, p.y)));
+            }
+
+            public void Points(params (int x, int y)[] points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddPoints(Color.White, points.Select(p => new Point2d(p.x, p.y)));
+            }
+            
+            public void Points(Color color, params (int x, int y)[] points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddPoints(color, points.Select(p => new Point2d(p.x, p.y)));
+            }
+
+            public void Points(IEnumerable<(double x, double y)> points)
+            {
+                points ??= Array.Empty<(double, double)>();
+                _graphedItems.AddPoints(Color.White, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+
+            public void Points(Color color, IEnumerable<(double x, double y)> points)
+            {
+                points ??= Array.Empty<(double, double)>();
+                _graphedItems.AddPoints(color, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+
             public void Points(params (double x, double y)[] points)
             {
                 points ??= Array.Empty<(double, double)>();
                 _graphedItems.AddPoints(Color.White, points.Select(p => new Point2d((float) p.x, (float) p.y)));
             }
 
-            public void Points(Color color, (double x, double y)[] points)
+            public void Points(Color color, params (double x, double y)[] points)
             {
                 points ??= Array.Empty<(double, double)>();
                 _graphedItems.AddPoints(color, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+            
+            public void Segments(IEnumerable<(int x, int y)> points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddSegments(Color.White, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+            
+            public void Segments(Color color, IEnumerable<(int x, int y)> points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddSegments(color, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+
+            public void Segments(params (int x, int y)[] points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddSegments(Color.White, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+            
+            public void Segments(Color color, params (int x, int y)[] points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddSegments(color, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+
+            public void Segments(IEnumerable<(double x, double y)> points)
+            {
+                points ??= Array.Empty<(double, double)>();
+                _graphedItems.AddSegments(Color.White, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+            
+            public void Segments(Color color, IEnumerable<(double x, double y)> points)
+            {
+                points ??= Array.Empty<(double, double)>();
+                _graphedItems.AddSegments(color, points.Select(p => new Point2d((float) p.x, (float) p.y)));
             }
 
             public void Segments(params (double x, double y)[] points)
