@@ -22,9 +22,9 @@ namespace SharpPlotter.Scripting
 //    * An array with exactly 2 numeric values representing x and y coordinates (e.g. `[1,2]`)
 //    * Calling the `p()` function with 2 values (e.g. `p(1,2)`)
 //
-// Color values can be used by calling the constructor on the `color` type with r, g, and b values passed in as values
-//    between 0 and 255.  Some ready made defaults are available to use off the `color` type, such as `color.Red`, 
-//    `color.Magenta`, etc...
+// Color values can be used by calling the constructor on the `Color` type with r, g, and b values passed in as values
+//    between 0 and 255.  Some ready made defaults are available to use off the `Color` type, such as `Color.Red`, 
+//    `Color.Magenta`, etc...
 //
 // The graph can be drawn on by calling the `graph.Points()` or `graph.Segments()` functions.  Each function takes
 //    an optional color and one or more point values (segments require at least 2 values).    
@@ -42,12 +42,10 @@ namespace SharpPlotter.Scripting
 
                     // Allow use of the `color` struct, so `color.Red` is accessible
                     .Execute(
-                        @"var SharpPlotterHelpers = importNamespace('Microsoft.Xna.Framework');var color = SharpPlotterHelpers.Color;")
+                        @"var SharpPlotterHelpers = importNamespace('Microsoft.Xna.Framework');var Color = SharpPlotterHelpers.Color;")
 
                     // Helper to make defining points easy
                     .SetValue("p", new Func<double, double, Point2d>((x, y) => new Point2d((float) x, (float) y)))
-                    //.SetValue("points", new CallPoints(drawMethods.Points))
-                    //.SetValue("segments", new Action<object[]>(o => drawMethods.Segments(o)))
                     .SetValue("graph", drawMethods)
                     .Execute(scriptContent, new ParserOptions { });
             }
