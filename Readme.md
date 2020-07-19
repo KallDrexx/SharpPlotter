@@ -1,6 +1,6 @@
 # SharpPlotter
 
-SharpPlotter is an application which allows you to quickly draw values onto a graph using C#, Javascript, or Python and your favorite code editor.  Once you load up a script in SharpPlotter, every time you save changes to the code you are writing will automatically render the results of the graph to the screen.
+SharpPlotter is an application which allows you to quickly draw values onto a graph using C#, Javascript, or Python along with your favorite code editor.  When you load up a script in SharpPlotter, every time you save changes the graph will automatically update with the results.
 
 [![Demonstration Video](https://raw.githubusercontent.com/KallDrexx/SharpPlotter/master/docs/Youtube%20Thumbnail.PNG)](https://www.youtube.com/watch?v=wfOljHUPfhg "Youtube Video")
 
@@ -9,6 +9,10 @@ SharpPlotter is an application which allows you to quickly draw values onto a gr
 **Table of Contents**
 
 - [Settings](#settings)
+- [Graphing Features](#graphing-features)
+  - [Points](#points)
+  - [Colors](#colors)
+  - [Drawing Methods](#drawing-methods)
 - [Scripting Languages](#scripting-languages)
   - [C# Scripting](#c-scripting)
   - [Javascript](#javascript)
@@ -18,32 +22,46 @@ SharpPlotter is an application which allows you to quickly draw values onto a gr
 
 ## Settings
 
-There are two primary settings that you can change from within the application, the directory that scripts are in and what code editor you wish to open automatically (if any).
+There are two primary settings that can be changed from within the application, the directory that scripts are located in and what code editor you wish to open automatically (if any).
 
 For simplicity all scripts are restricted to a single directory.  By default this directory is `%MyDocuments%\SharpPlotter` on windows and `~/SharpPlotter` on unix variants.  
 
-The code editor executable can be changed as well.  The default is set to `code` for visual studio code, but it can be changed to any executable as long as it is in your path, or removed if you don't want SharpPlotter to load the text editor for you.  When the text editor is launched for any given file it will pass in the full path to the script to load as an argument.
+The code editor executable can be changed as well.  The default is set to `code` for visual studio code, but it can be changed to any executable as long as it is in your path.  This value can also be emptied if you don't want SharpPlotter to load the text editor for you.  When the text editor is launched it will pass in the full path to the script to load as an argument.
+
+## Graphing Features
+
+### Points
+
+Many items that you will want to draw on the graph need one or more coordinates to know where to draw them.  These points consist of X and Y coordinates on the graph and are represented differently depending on the scripting language being used:
+
+* C# and Python use tuples with 2 numerical items, such as `(1,2)` for x=1, y=2
+* Javascript has multiple options for specifying graph coordinates
+  * As an object literal with an `x` and `y` property (e.g. `{x: 1, y: 2}`)
+  * As an array containing 2 numeric values, with the x value as the first and y value as the 2nd (e.g. `[1,2]`)
+  * With a custom built-in function `p()` (e.g. `p(1,2)`)
+
+### Colors
+
+By default all items drawn on the graph will be white.  When drawing on the graph it can be useful to set different value sets to different colors to allow for visual differentiation between them.
+
+SharpPlotter scripts have access to the XNA/Monogame `Color` structure in order to define colors.  This can be done by calling the `Color(r, g, b)` constructor, which takes red, green, and blue values as numeric integers between 0 and 255.  The color structure also has [many predefined colors](https://github.com/MonoGame/MonoGame/blob/develop/MonoGame.Framework/Color.cs#L21) that can be readily referenced.  Each language can form a color via: `new Color(0, 128, 128)` or by the predefined values, such as `Color.CornflowerBlue`.
+
+### Drawing Methods
+
+Scripts are given access to a global object that represents the graph.  For C# scripts this is `Graph`, while Python and Javascript its `graph`.  This object has several methods that can be called to draw on the graph:
+
+* `Points()` - Used to draw one or more isolated points on the graph.  Each point will be drawn as a circle centered on the point specified.  Any number of points can be passed in, and they can be specified individuall from within the function call, or be passed in via an array of points.
+* `Segments()` - Used to draw one or more line segments on the graph.  Any number of points can be passed in, and a line segment will be drawn from one point to the next in the order specified.
+
+All methods can optionally have a `Color` value specified as the first argument for the color the drawings should be done with.  If no color is specified than they will default to white.
 
 ## Scripting Languages
 
-As of right now 3 languages are support - C#, Javascript, and Python.  It is important that all script files use the correct language extension (`.cs`, `.js` and `.py` respectively), as that is how SharpPlotter knows which scripting engine to use for each file.  
+As of right now 3 languages are supported - C#, Javascript, and Python.  It is important that all script files use the correct language extension (`.cs`, `.js` and `.py` respectively), as that is how SharpPlotter knows which scripting engine to use for each file.
 
 ### C# Scripting
 
 SharpPlotter uses the Rosly for C# 8 compiling and execution.  Scripts being written do not need to apply to a lot of formalities of most C# projects, meaning that the code does not need to be enclosed in a namespace or class, and class/struct definitions, function definitions, and execution code can all exist on the same indentation levels.  
-
-The scripting runtime comes with the XNA `Color` structure for defining colors for different operations.  This allows you use predefined colors such as `Color.Red` and `Color.CornflowerBlue`, or define your own with the `Color(byte r, byte g, byte b)` constructor.  
-
-In order to draw on the graph the script has access to an object instance named `Graph`.  This object contains methods to draw points and line segments onto the graphs, with an optional color argument as the first parameter.
-
-Some example drawing calls are:
-
-* `Graph.Points((1,2))` - draws a single white point on the graph at x=1, y=2
-* `Graph.Points(Color.Red, (3,2), (4,1))` - draws two red points on the graph at x=3, y=2 and x=4, y=1
-* `Graph.Segments(1,1), (2,2), (3,3))` - Draws 2 white line segments, one from (1,1) to (2,2) and a second from (2,2) to (3,3)
-* `Graph.Segments(Color.Green, anEnumerableOfPoints)` - Draws green line segments from each point in the enumerable to the next
-
-As can be seen, all points specified are expected to be numeric 2 item tuples.
 
 An example script that draws a function `f(x) = |x*x|` for all integer values between -10 and 10 is:
 
@@ -87,25 +105,13 @@ Graph.Segments(Color.Orange, points.Select(p => (p.X, p.Y)));
 
 ### Javascript
 
-SharpPlotter uses a full ECMA 5.1 compliance compiler and execution engine for its javascript support.  Due to the nature of javascript there are 3 primary ways to specify a single point on the graph.
-
-* An object with `x` and `y` properties (e.g. `{x: 1, y: 2})`)
-* An array with exactly 2 numeric values representing x and y coordinates (e.g. `[1, 2]`)
-* Calling the built-in `p()` function with 2 numeric values (e.g. `p(1,2)`)
-
-Multiple points can be combined into an array to batch them together to draw them to the graph.
-
-Color values can be specified by calling the constructor on the `color` type, with `r`, `g`, `b` arguments passed in containing values between `0` and `255`.  For example, a cyan color can be created by calling `new color(0, 128, 128);`.  The `color` object also has properties for pre-made values, such as `Color.Red` and `Color.CornflowerBlue`.
-
-**Warning**: One mistake is accidentally redefining the `color` global, and that can cause errors when attempting to draw colored points to the graph.
-
-Once you have a set of points you can then use those points to draw the points themselves or line segments through the points by using the `graph` global object.  You can then call the `graph.Points()` function to draw isolated points, or `graph.Segments()` to draw line segments.  Each function takes an optional color parameter and one or more points.
+SharpPlotter uses a full ECMA 5.1 compliance compiler and execution engine for its javascript support. 
 
 An example of a script that draws the function `f(x) = x*x` for integer values -9 to 9 is:
 
 ```
 function renderPoint(point) {
-    var allColors = [color.Red, color.Yellow, color.Blue, color.Magenta, color.Cyan];
+    var allColors = [Color.Red, Color.Yellow, Color.Blue, Color.Magenta, Color.Cyan];
     var index = Math.abs(point.x + point.y) % allColors.length;
     var chosenColor = allColors[index];
 
@@ -117,8 +123,8 @@ var inversePoints = points.map(p => ({x: -p.x, y: -p.y}));
 
 points.forEach(renderPoint);
 inversePoints.forEach(renderPoint);
-graph.Segments(color.Green, points);
-graph.Segments(color.Red, inversePoints);
+graph.Segments(Color.Green, points);
+graph.Segments(Color.Red, inversePoints);
 ```
 
 ![Javascript Example](https://github.com/KallDrexx/SharpPlotter/raw/master/docs/Javascript%20Example.PNG)
@@ -126,12 +132,6 @@ graph.Segments(color.Red, inversePoints);
 ### Python
 
 SharpPlotter contains a Python 2.7 compatible python interpretor.  
-
-Individual points are specified by tuples (e.g. `(1,2)` for x=1, y=2).  
-
-Colors are defined by calling the `Color(r, g, b)` function with integer values between 0 and 255.  A set of predefined colors exist as properties on the `Color` object, such as `Color.Green`, `Color.CornflowerBlue`, etc...
-
-The graph can be drawn to by calling `graph.Points()` and `graph.Segments()`.  These functions optionally take a color and a set of points.
 
 An example of a script that draws the function `f(x) = x*x` for integer values 0-8 is:
 
