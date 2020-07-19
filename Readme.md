@@ -2,7 +2,7 @@
 
 SharpPlotter is an application which allows you to quickly draw values onto a graph using C#, Javascript, or Python and your favorite code editor.  Once you load up a script in SharpPlotter, every time you save changes to the code you are writing will automatically render the results of the graph to the screen.
 
-[![Demonstration Video](https://raw.githubusercontent.com/KallDrexx/SharpPlotter/master/docs/Youtube Thumbnail.PNG)](https://www.youtube.com/watch?v=wfOljHUPfhg&feature=youtu.be)
+[![Demonstration Video](https://raw.githubusercontent.com/KallDrexx/SharpPlotter/master/docs/Youtube%20Thumbnail.PNG)](https://www.youtube.com/watch?v=wfOljHUPfhg "Youtube Video")
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -83,6 +83,8 @@ for (var x = 0; x < points.Length; x++)
 Graph.Segments(Color.Orange, points.Select(p => (p.X, p.Y)));
 ```
 
+![Example Image](https://github.com/KallDrexx/SharpPlotter/raw/master/docs/CSharp%20Example.PNG)
+
 ### Javascript
 
 SharpPlotter uses a full ECMA 5.1 compliance compiler and execution engine for its javascript support.  Due to the nature of javascript there are 3 primary ways to specify a single point on the graph.
@@ -119,6 +121,8 @@ graph.Segments(color.Green, points);
 graph.Segments(color.Red, inversePoints);
 ```
 
+![Javascript Example](https://github.com/KallDrexx/SharpPlotter/raw/master/docs/Javascript%20Example.PNG)
+
 ### Python
 
 SharpPlotter contains a Python 2.7 compatible python interpretor.  
@@ -148,4 +152,6 @@ for point in points:
 
 graph.Segments(Color.Blue, points)
 ```
+
+![Python Example](https://github.com/KallDrexx/SharpPlotter/raw/master/docs/Python%20Example.PNG)
 
