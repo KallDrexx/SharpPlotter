@@ -15,6 +15,22 @@ namespace SharpPlotter.Scripting
     {
         private readonly ScriptEngine _scriptEngine;
 
+        public string NewFileHeaderContent => @"
+# Python script for SharpPlotter
+#
+# Points on the graph can be defined as a tuple value of x and y coordinates, such as `(1,2)`.  
+#
+# Colors can be defined by calling the `Color(r, g, b)` function with integer values between 0 and 255.  A set of 
+#    predefined colors exist as properties on the `Color` object, such as `Color.Green`, `Color.CornflowerBlue`, etc..
+#
+# The graph can be drawn on by calling the `graph.Points()` function to draw isolated points, or the `graph.Segments()`
+#    function which draws line segments from one point to the next.  Points can be specified individually by hand
+#    (e.g. `graph.Points((1,1), (1,2), (1,3))`) or they can be passed in via an array.  Points and segments will be
+#    white unless the first parameter of the function is a color value.
+#
+  
+".TrimStart();
+
         public PythonScriptRunner()
         {
             _scriptEngine = Python.CreateEngine();

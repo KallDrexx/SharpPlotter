@@ -59,11 +59,12 @@ namespace SharpPlotter.Scripting
             {
                 throw new InvalidOperationException($"Cannot create file `{fullPath}' as it already exists");
             }
-            
-            File.WriteAllText(fullPath, "");
 
             CurrentFileName = fileName;
             CurrentLanguage = language;
+            SetupScriptRunner();
+            
+            File.WriteAllText(fullPath, _scriptRunner.NewFileHeaderContent);
             
             _appSettings.AddOpenedFileName(fileName);
             OpenTextEditorCurrentFile();
@@ -93,6 +94,7 @@ namespace SharpPlotter.Scripting
             
             CurrentLanguage = language;
             CurrentFileName = fileName;
+            SetupScriptRunner();
             
             _appSettings.AddOpenedFileName(fileName);
             OpenTextEditorCurrentFile();
@@ -164,7 +166,7 @@ namespace SharpPlotter.Scripting
             Process.Start("cmd", $"/C {_appSettings.TextEditorExecutable} \"{fullPath}\"");
         }
 
-        private void SetupScriptExecution()
+        private void SetupScriptRunner()
         {
             _scriptRunner = CurrentLanguage switch
             {
@@ -173,7 +175,10 @@ namespace SharpPlotter.Scripting
                 ScriptLanguage.Python => new PythonScriptRunner(),
                 _ => throw new NotSupportedException($"No script runner for script of type '{CurrentLanguage}'")
             };
+        }
 
+        private void SetupScriptExecution()
+        {
             _fileSystemWatcher.EnableRaisingEvents = false;
             _fileSystemWatcher.Path = _appSettings.ScriptFolderPath;
             _fileSystemWatcher.Filter = CurrentFileName;

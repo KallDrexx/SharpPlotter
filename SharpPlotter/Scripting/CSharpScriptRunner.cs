@@ -11,6 +11,29 @@ namespace SharpPlotter.Scripting
     {
         private readonly ScriptOptions _scriptOptions;
 
+        public string NewFileHeaderContent => @"
+// C# script for SharpPlotter
+//
+// Points on the graph can be specified via a 2 item numeric tuple, e.g. `(1,2)` refers to x=1, y=2 on the graph.
+// Colors are specified via the XNA Color structure, so a predefined set of colors can be utilized directly, for 
+//    example `Color.Red`, or `Color.CornflowerBlue`.  Custom colors can be specified via the `new Color(r,g,b)`
+//    constructor.
+//
+// The graph can be drawn to by calling the `Graph.Points()` to draw isolated points, or `Graph.Segments()` to draw
+//    a set of line segments.  Both functions take in one or more point tuples (specified individually or contained
+//    within an `IEnumerable<(x,y)>`), and the first parameter may be a `Color` to specify the color for each call.
+//
+// Examples:
+//    * `Graph.Points((1,2))` draws a single white point at x=1, y=2
+//    * `Graph.Points(Color.Red, (3,2), (4,1))` draws 2 red points at x=3, y=2, and x=4, y=1
+//    * `Graph.Segments((1,1), (2,2), (3,3))` draws 2 white line segments, one from 1,1 to 2,2, and a 2nd from 2,2 to 3,3
+//    * `Graph.Segments(Color.Green, anArrayOfPoints)` draws green lines from each point in the array to the next.
+//
+using System;
+using System.Linq;
+
+".TrimStart();
+
         public CSharpScriptRunner()
         {
             _scriptOptions = ScriptOptions.Default

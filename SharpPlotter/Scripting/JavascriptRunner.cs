@@ -14,6 +14,22 @@ namespace SharpPlotter.Scripting
     public class JavascriptRunner : IScriptRunner
     {
         private delegate void CallPoints(params object[] values);
+
+        public string NewFileHeaderContent => @"
+// Javascript script for SharpPlotter
+// Points on the graph can be specified in several ways:
+//    * An object with `x` and `y` properties (e.g. `{x:1,y:2}`)
+//    * An array with exactly 2 numeric values representing x and y coordinates (e.g. `[1,2]`)
+//    * Calling the `p()` function with 2 values (e.g. `p(1,2)`)
+//
+// Color values can be used by calling the constructor on the `color` type with r, g, and b values passed in as values
+//    between 0 and 255.  Some ready made defaults are available to use off the `color` type, such as `color.Red`, 
+//    `color.Magenta`, etc...
+//
+// The graph can be drawn on by calling the `graph.Points()` or `graph.Segments()` functions.  Each function takes
+//    an optional color and one or more point values (segments require at least 2 values).    
+
+".TrimStart();
         
         public GraphedItems RunScript(string scriptContent)
         {
@@ -26,7 +42,7 @@ namespace SharpPlotter.Scripting
 
                     // Allow use of the `color` struct, so `color.Red` is accessible
                     .Execute(
-                        @"var XnaFramework = importNamespace('Microsoft.Xna.Framework');var color = XnaFramework.Color;")
+                        @"var SharpPlotterHelpers = importNamespace('Microsoft.Xna.Framework');var color = SharpPlotterHelpers.Color;")
 
                     // Helper to make defining points easy
                     .SetValue("p", new Func<double, double, Point2d>((x, y) => new Point2d((float) x, (float) y)))
