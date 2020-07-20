@@ -249,8 +249,8 @@ namespace SharpPlotter.Rendering
         {
             foreach (var point in points)
             {
-                var x = GetPixelXForGraphValue((int) point.Point.X);
-                var y = GetPixelYForGraphValue((int) point.Point.Y);
+                var x = GetPixelXForGraphValue(point.Point.X);
+                var y = GetPixelYForGraphValue(point.Point.Y);
                 var color = new SKColor(point.Color.R, point.Color.G, point.Color.B);
                 
                 _surface.Canvas.DrawCircle(x, y, 5, new SKPaint{Color = color});
@@ -261,10 +261,10 @@ namespace SharpPlotter.Rendering
         {
             foreach (var segment in segments)
             {
-                var startX = GetPixelXForGraphValue((int) segment.Start.X);
-                var startY = GetPixelYForGraphValue((int) segment.Start.Y);
-                var endX = GetPixelXForGraphValue((int) segment.End.X);
-                var endY = GetPixelYForGraphValue((int) segment.End.Y);
+                var startX = GetPixelXForGraphValue(segment.Start.X);
+                var startY = GetPixelYForGraphValue(segment.Start.Y);
+                var endX = GetPixelXForGraphValue(segment.End.X);
+                var endY = GetPixelYForGraphValue(segment.End.Y);
                 
                 var start = new SKPoint(startX, startY);
                 var end = new SKPoint(endX, endY);
@@ -348,7 +348,7 @@ namespace SharpPlotter.Rendering
             _surface.Canvas.DrawText(value.ToString(), labelPoint, skPaint);
         }
 
-        private int GetPixelXForGraphValue(int value)
+        private int GetPixelXForGraphValue(float value)
         {
             var zoomedPixelsPerXUnit = _basePixelsPerXUnit * ZoomFactor;
             var distanceFromOrigin = value - Origin.X;
@@ -357,7 +357,7 @@ namespace SharpPlotter.Rendering
             return _width / 2 + pixelsFromCenter;
         }
 
-        private int GetPixelYForGraphValue(int value)
+        private int GetPixelYForGraphValue(float value)
         {
             var zoomedPixelsPerYUnit = _basePixelsPerYUnit * ZoomFactor;
             var distanceFromOrigin = value - Origin.Y;
