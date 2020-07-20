@@ -82,6 +82,14 @@ namespace SharpPlotter.Scripting
                 _graphedItems.AddSegments(color, points);
             }
 
+            public void Log(string message)
+            {
+                if (!string.IsNullOrWhiteSpace(message))
+                {
+                    _graphedItems.Messages.Enqueue(message);
+                }
+            }
+
             private static (Color color, Point2d[] points) ParseObjects(params object[] objects)
             {
                 // JInt will always call this as an array of objects, so we'll have to manually parse each argument out

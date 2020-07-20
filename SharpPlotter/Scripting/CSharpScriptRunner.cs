@@ -176,6 +176,14 @@ using System.Linq;
                 points ??= Array.Empty<(double, double)>();
                 _graphedItems.AddSegments(color, points.Select(p => new Point2d((float) p.x, (float) p.y)));
             }
+
+            public void Log(string message)
+            {
+                if (!string.IsNullOrWhiteSpace(message))
+                {
+                    _graphedItems.Messages.Enqueue(message);
+                }
+            }
         }
     }
 }

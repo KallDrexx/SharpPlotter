@@ -52,6 +52,7 @@ Scripts are given access to a global object that represents the graph.  For C# s
 
 * `Points()` - Used to draw one or more isolated points on the graph.  Each point will be drawn as a circle centered on the point specified.  Any number of points can be passed in, and they can be specified individuall from within the function call, or be passed in via an array of points.
 * `Segments()` - Used to draw one or more line segments on the graph.  Any number of points can be passed in, and a line segment will be drawn from one point to the next in the order specified.
+* `Log()` - When passed a single string, this message will be displayed on screen.  Multiple calls to `Log()` can be made for multiple messages.  This can be used for debugging or for presenting non-visible data.
 
 All methods can optionally have a `Color` value specified as the first argument for the color the drawings should be done with.  If no color is specified than they will default to white.
 

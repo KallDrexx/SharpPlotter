@@ -92,6 +92,14 @@ namespace SharpPlotter.Scripting
                 _graphedItems.AddSegments(color, points);
             }
 
+            public void Log(string message)
+            {
+                if (!string.IsNullOrWhiteSpace(message))
+                {
+                    _graphedItems.Messages.Enqueue(message);
+                }
+            }
+
             private static (Color color, Point2d[] points) ParseObjects(params object[] objects)
             {
                 // Due to python's dynamic nature, the incoming objects can be one of several type of objects

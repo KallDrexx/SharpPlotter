@@ -13,6 +13,8 @@ namespace SharpPlotter
     {
         private readonly List<RenderedPoint> _points = new List<RenderedPoint>();
         private readonly List<RenderedSegment> _segments = new List<RenderedSegment>();
+
+        public Queue<string> Messages { get; } = new Queue<string>();
         
         /// <summary>
         /// The smallest X and Y values across all graphed items
@@ -47,6 +49,9 @@ namespace SharpPlotter
             GraphItemsUpdated();
         }
 
+        /// <summary>
+        /// Adds line segments to the graph from each point specified to the next point.  
+        /// </summary>
         public void AddSegments(Color color, IEnumerable<Point2d> points)
         {
             points ??= Array.Empty<Point2d>();

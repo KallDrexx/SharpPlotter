@@ -94,6 +94,11 @@ namespace SharpPlotter.MonoGame
             if (newGraphedItems != null)
             {
                 _graphedItems = newGraphedItems;
+
+                while (_graphedItems.Messages.TryDequeue(out var message))
+                {
+                    _onScreenLogger.LogMessage(message);
+                }
             }
 
             base.Update(gameTime);
