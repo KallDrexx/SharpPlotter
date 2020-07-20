@@ -26,8 +26,14 @@ namespace SharpPlotter.Scripting
 //    between 0 and 255.  Some ready made defaults are available to use off the `Color` type, such as `Color.Red`, 
 //    `Color.Magenta`, etc...
 //
-// The graph can be drawn on by calling the `graph.Points()` or `graph.Segments()` functions.  Each function takes
-//    an optional color and one or more point values (segments require at least 2 values).    
+// The graph can be drawn on with the following functions
+//    * `graph.Points()` allows drawing one or more isolated points (e.g. `graph.Points(p(1,2), p(3,4));`)
+//    * `graph.Segments()` allows drawing line segments from one point to the next (e.g. `graph.Segments(p(1,2), p(3,4), p(4,0));`)
+//    * `graph.Function()` allows drawing an unbounded function for each x value (e.g. `graph.Function(function(x) { return x*x;});`)
+//    * `graph.Log()` allows displaying a text message on the screen (can be used for debugging).
+//
+// All graph functions except `Log()` can have a first parameter being a color value to change the color of the 
+//    drawn data.    
 
 ".TrimStart();
         
@@ -88,6 +94,16 @@ namespace SharpPlotter.Scripting
                 {
                     _graphedItems.Messages.Enqueue(message);
                 }
+            }
+
+            public void Function(Color color, Func<float, float> function)
+            {
+                _graphedItems.AddFunction(color, function);
+            }
+            
+            public void Function(Func<float, float> function)
+            {
+                _graphedItems.AddFunction(Color.White, function);
             }
 
             private static (Color color, Point2d[] points) ParseObjects(params object[] objects)

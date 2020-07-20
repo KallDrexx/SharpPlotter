@@ -29,6 +29,13 @@ namespace SharpPlotter.Rendering
         /// </summary>
         private const int StandardPixelsPerGraphUnit = 90;
 
+        /// <summary>
+        /// The number of pixels between each function call.  This allows us to not have to run the function for every
+        /// horizontal pixel and can help cut with performance.  Instead lines will be drawn between each function
+        /// called value
+        /// </summary>
+        private const int FunctionPixelResolution = 10;
+
         private readonly OnScreenLogger _onScreenLogger;
         private readonly SKSurface _surface;
         private readonly int _width, _height, _usableWidth, _usableHeight;
@@ -199,15 +206,19 @@ namespace SharpPlotter.Rendering
             return new Point2d(gridX, gridY);
         }
 
-        public SKImage Render(IReadOnlyList<RenderedPoint> points, IReadOnlyList<RenderedSegment> segments)
+        public SKImage Render(IReadOnlyList<RenderedPoint> points, 
+            IReadOnlyList<RenderedSegment> segments,
+            IReadOnlyList<RenderedFunction> functions)
         {
             points ??= Array.Empty<RenderedPoint>();
             segments ??= Array.Empty<RenderedSegment>();
+            functions ??= Array.Empty<RenderedFunction>();
             
             _surface.Canvas.Clear(SKColors.Black);
             RenderGridLines();
             RenderSegments(segments);
             RenderPoints(points);
+            RenderFunctions(functions);
 
             CameraHasMoved = false;
             
@@ -271,6 +282,41 @@ namespace SharpPlotter.Rendering
                 var color = new SKColor(segment.Color.R, segment.Color.G, segment.Color.B);
                 
                 _surface.Canvas.DrawLine(start, end, new SKPaint{Color = color});
+            }
+        }
+
+        private void RenderFunctions(IEnumerable<RenderedFunction> renderedFunctions)
+        {
+            var minGraphValue = GetMinHorizontalGraphValue();
+            var horizontalUnits = 1 / (_basePixelsPerXUnit * ZoomFactor);
+            
+            foreach (var renderedFunction in renderedFunctions)
+            {
+                var paint = new SKPaint
+                {
+                    Color = new SKColor(
+                        renderedFunction.Color.R,
+                        renderedFunction.Color.G,
+                        renderedFunction.Color.B)
+                };
+                
+                var currentColumn = 0;
+                var lastPoint = (SKPoint?) null;
+                while (currentColumn < _usableWidth)
+                {
+                    var pixelColumn = currentColumn + GridLineMargin;
+                    var graphXValue = horizontalUnits * currentColumn + minGraphValue;
+                    var graphYValue = renderedFunction.Function(graphXValue);
+                    var pixelRow = GetPixelYForGraphValue(graphYValue);
+                    var currentPoint = new SKPoint(pixelColumn, pixelRow);
+                    if (lastPoint != null)
+                    {
+                        _surface.Canvas.DrawLine(lastPoint.Value, currentPoint, paint);
+                    }
+
+                    lastPoint = currentPoint;
+                    currentColumn += FunctionPixelResolution;
+                }
             }
         }
 
@@ -364,6 +410,15 @@ namespace SharpPlotter.Rendering
 
             var pixelsFromCenter = (int)(zoomedPixelsPerYUnit * distanceFromOrigin);
             return _height / 2 - pixelsFromCenter;
+        }
+
+        private float GetMinHorizontalGraphValue()
+        {
+            var zoomedPixelsPerXUnit = _basePixelsPerXUnit * ZoomFactor;
+            var totalGraphValueCount = _usableWidth / zoomedPixelsPerXUnit;
+            var minimumDisplayedValue = Origin.X - totalGraphValueCount / 2;
+
+            return minimumDisplayedValue;
         }
     }
 }

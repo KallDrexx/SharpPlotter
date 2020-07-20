@@ -6,11 +6,15 @@ namespace SharpPlotter.Rendering
     {
         public IReadOnlyList<RenderedPoint> Points { get; }
         public IReadOnlyList<RenderedSegment> Segments { get; }
+        public IReadOnlyList<RenderedFunction> Functions { get; }
         
-        public ItemsToRender(IReadOnlyList<RenderedPoint> points, IReadOnlyList<RenderedSegment> segments)
+        public ItemsToRender(IReadOnlyList<RenderedPoint> points, 
+            IReadOnlyList<RenderedSegment> segments, 
+            IReadOnlyList<RenderedFunction> functions)
         {
             Points = points;
             Segments = segments;
+            Functions = functions;
         }
     }
 }

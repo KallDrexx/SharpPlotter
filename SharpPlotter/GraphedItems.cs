@@ -13,6 +13,7 @@ namespace SharpPlotter
     {
         private readonly List<RenderedPoint> _points = new List<RenderedPoint>();
         private readonly List<RenderedSegment> _segments = new List<RenderedSegment>();
+        private readonly List<RenderedFunction> _functions = new List<RenderedFunction>();
 
         public Queue<string> Messages { get; } = new Queue<string>();
         
@@ -69,6 +70,16 @@ namespace SharpPlotter
             
             GraphItemsUpdated();
         }
+
+        /// <summary>
+        /// Adds an unbounded function that will be rendered, with values calculated on demand
+        /// </summary>
+        public void AddFunction(Color color, Func<float, float> function)
+        {
+            if (function == null) throw new ArgumentNullException(nameof(function));
+            
+            _functions.Add(new RenderedFunction(color, function));
+        }
         
         /// <summary>
         /// Provides the list of items that should be rendered.  This will reset `ItemsChangedSinceLastRender`
@@ -76,7 +87,7 @@ namespace SharpPlotter
         internal ItemsToRender GetItemsToRender()
         {
             ItemsChangedSinceLastRender = false;
-            return new ItemsToRender(_points, _segments);
+            return new ItemsToRender(_points, _segments, _functions);
         }
 
         private void GraphItemsUpdated()

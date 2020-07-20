@@ -19,15 +19,15 @@ namespace SharpPlotter.Scripting
 //    example `Color.Red`, or `Color.CornflowerBlue`.  Custom colors can be specified via the `new Color(r,g,b)`
 //    constructor.
 //
-// The graph can be drawn to by calling the `Graph.Points()` to draw isolated points, or `Graph.Segments()` to draw
-//    a set of line segments.  Both functions take in one or more point tuples (specified individually or contained
-//    within an `IEnumerable<(x,y)>`), and the first parameter may be a `Color` to specify the color for each call.
+// The graph can be drawn on via the following methods:
+//    * `Graph.Points()` draws one or more isolated points at the specified positions (e.g. `Graph.Points((1,2), (3,4))`)
+//    * `Graph.Segments()` draws line segments from one point to the next (e.g. `Graph.Segments((1,2), (3,4), (4,0))`)
+//    * `Graph.Function()` draws an unbounded function for each X graph value visible (e.g. `Graph.Function(x => x * x)`)
+//    * `Graph.Log()` will show a text message on the screen (can be helpful for debugging or non-graph values)
 //
-// Examples:
-//    * `Graph.Points((1,2))` draws a single white point at x=1, y=2
-//    * `Graph.Points(Color.Red, (3,2), (4,1))` draws 2 red points at x=3, y=2, and x=4, y=1
-//    * `Graph.Segments((1,1), (2,2), (3,3))` draws 2 white line segments, one from 1,1 to 2,2, and a 2nd from 2,2 to 3,3
-//    * `Graph.Segments(Color.Green, anArrayOfPoints)` draws green lines from each point in the array to the next.
+// All graphing functions except `Log()` can have the first parameter as a color value to change what color they are
+//    drawn as.  The `Points()` and `Segments()` methods can be given an `Enumerable<(float, float)>` to be given
+//    any number of points.
 //
 using System;
 using System.Linq;
@@ -183,6 +183,16 @@ using System.Linq;
                 {
                     _graphedItems.Messages.Enqueue(message);
                 }
+            }
+
+            public void Function(Func<float, float> function)
+            {
+                _graphedItems.AddFunction(Color.White, function);
+            }
+
+            public void Function(Color color, Func<float, float> function)
+            {
+                _graphedItems.AddFunction(color, function);
             }
         }
     }

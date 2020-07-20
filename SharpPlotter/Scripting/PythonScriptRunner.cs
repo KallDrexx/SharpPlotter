@@ -23,10 +23,14 @@ namespace SharpPlotter.Scripting
 # Colors can be defined by calling the `Color(r, g, b)` function with integer values between 0 and 255.  A set of 
 #    predefined colors exist as properties on the `Color` object, such as `Color.Green`, `Color.CornflowerBlue`, etc..
 #
-# The graph can be drawn on by calling the `graph.Points()` function to draw isolated points, or the `graph.Segments()`
-#    function which draws line segments from one point to the next.  Points can be specified individually by hand
-#    (e.g. `graph.Points((1,1), (1,2), (1,3))`) or they can be passed in via an array.  Points and segments will be
-#    white unless the first parameter of the function is a color value.
+# The graph can be drawn on by calling any of the following functions:
+#    * `graph.Points()` can draw one or more isolated points (e.g. `graph.Points((1,2), (3,4), (4,0))`)
+#    * `graph.Segments()` can draw line segments from one point to the next (e.g. `graph.Segments((1,2), (3,4), (4,0))`)
+#    * `graph.Function()` can draw an unbounded function for each visible X value (e.g. `graph.Function(lambda x: x * x)`)
+#    * `graph.Log()` displays a text message to the screen (useful for debugging and non-graph output)
+#
+# All functions except `Log()` can optionally take a color value as the first parameter to change what color each
+#    drawing is rendered as.
 #
   
 ".TrimStart();
@@ -98,6 +102,16 @@ namespace SharpPlotter.Scripting
                 {
                     _graphedItems.Messages.Enqueue(message);
                 }
+            }
+
+            public void Function(Color color, Func<float, float> function)
+            {
+                _graphedItems.AddFunction(color, function);
+            }
+
+            public void Function(Func<float, float> function)
+            {
+                _graphedItems.AddFunction(Color.White, function);
             }
 
             private static (Color color, Point2d[] points) ParseObjects(params object[] objects)

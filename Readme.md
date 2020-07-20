@@ -52,9 +52,10 @@ Scripts are given access to a global object that represents the graph.  For C# s
 
 * `Points()` - Used to draw one or more isolated points on the graph.  Each point will be drawn as a circle centered on the point specified.  Any number of points can be passed in, and they can be specified individuall from within the function call, or be passed in via an array of points.
 * `Segments()` - Used to draw one or more line segments on the graph.  Any number of points can be passed in, and a line segment will be drawn from one point to the next in the order specified.
+* `Function()` - Adds an unbounded function that will be drawn for every visible X graph value on the screen.
 * `Log()` - When passed a single string, this message will be displayed on screen.  Multiple calls to `Log()` can be made for multiple messages.  This can be used for debugging or for presenting non-visible data.
 
-All methods can optionally have a `Color` value specified as the first argument for the color the drawings should be done with.  If no color is specified than they will default to white.
+All methods (except `Log()`) can optionally have a `Color` value specified as the first argument for the color the drawings should be done with.  If no color is specified than they will default to white.
 
 ## Scripting Languages
 
@@ -62,9 +63,11 @@ As of right now 3 languages are supported - C#, Javascript, and Python.  It is i
 
 ### C# Scripting
 
-SharpPlotter uses the Rosly for C# 8 compiling and execution.  Scripts being written do not need to apply to a lot of formalities of most C# projects, meaning that the code does not need to be enclosed in a namespace or class, and class/struct definitions, function definitions, and execution code can all exist on the same indentation levels.  
+SharpPlotter uses the Rosly for C# 8 compiling and execution.  Scripts being written do not need to apply to a lot of formalities of most C# projects, meaning that the code does not need to be enclosed in a namespace or class, and class/struct definitions, function definitions, and execution code can all exist on the same indentation levels.
 
-An example script that draws a function `f(x) = |x*x|` for all integer values between -10 and 10 is:
+Standard C# lambdas can be used to draw unbounded functions.  These lambadas must take in a float and return a float, for example `Graph.Function(x => x * x);`
+
+An example script is:
 
 ```
 using System;
@@ -108,7 +111,9 @@ Graph.Segments(Color.Orange, points.Select(p => (p.X, p.Y)));
 
 SharpPlotter uses a full ECMA 5.1 compliance compiler and execution engine for its javascript support. 
 
-An example of a script that draws the function `f(x) = x*x` for integer values -9 to 9 is:
+Unbounded functions can be graphed in by passing a function that takes a single numeric argument and returns a numeric argument.  E.g. `graph.Function(function(x) {return x * x;})`.
+
+An example script is:
 
 ```
 function renderPoint(point) {
@@ -134,7 +139,9 @@ graph.Segments(Color.Red, inversePoints);
 
 SharpPlotter contains a Python 2.7 compatible python interpretor.  
 
-An example of a script that draws the function `f(x) = x*x` for integer values 0-8 is:
+Unbounded functions can be graphed by passing a python lambda into the `graph.Function` function call.  These lambads must take in a single numeric value and return a numeric value.  E.g. `graph.Function(lambda x: x * x)`.
+
+An example script is:
 
 ```
 def renderPoints(point):

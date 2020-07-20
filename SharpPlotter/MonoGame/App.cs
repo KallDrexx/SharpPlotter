@@ -53,7 +53,7 @@ namespace SharpPlotter.MonoGame
             _graphedItems = new GraphedItems();
 
             // Do a first render to get pixel data from the image for initial byte data allocation
-            using var image = _camera.Render(null, null);
+            using var image = _camera.Render(null, null, null);
             _rawCanvasPixels = new byte[image.Height * image.PeekPixels().RowBytes];
 
             _scriptManager = new ScriptManager(_appSettings, _onScreenLogger);
@@ -111,7 +111,7 @@ namespace SharpPlotter.MonoGame
             if (_graphTexture == null || _camera.CameraHasMoved || _graphedItems.ItemsChangedSinceLastRender)
             {
                 var itemsToRender = _graphedItems.GetItemsToRender();
-                using var image = _camera.Render(itemsToRender.Points, itemsToRender.Segments);
+                using var image = _camera.Render(itemsToRender.Points, itemsToRender.Segments, itemsToRender.Functions);
                 RenderImageToTexture2D(image, GraphicsDevice);
             }
 
