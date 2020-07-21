@@ -6,6 +6,7 @@ using Esprima;
 using IronPython.Runtime;
 using Jint;
 using Jint.Runtime;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 
@@ -30,6 +31,7 @@ namespace SharpPlotter.Scripting
 //    * `graph.Points()` allows drawing one or more isolated points (e.g. `graph.Points(p(1,2), p(3,4));`)
 //    * `graph.Segments()` allows drawing line segments from one point to the next (e.g. `graph.Segments(p(1,2), p(3,4), p(4,0));`)
 //    * `graph.Function()` allows drawing an unbounded function for each x value (e.g. `graph.Function(function(x) { return x*x;});`)
+//    * `graph.Arrow()` allows drawing an arrow from a starting point to an ending point (e.g. `graph.Arrow(p(1,1), p(2,2));`)
 //    * `graph.Log()` allows displaying a text message on the screen (can be used for debugging).
 //
 // All graph functions except `Log()` can have a first parameter being a color value to change the color of the 
@@ -106,6 +108,34 @@ namespace SharpPlotter.Scripting
                 _graphedItems.AddFunction(Color.White, function);
             }
 
+            public void Arrow(Color color, object start, object end)
+            {
+                var (_, startPoints) = ParseObject(start);
+                var (_, endPoints) = ParseObject(end);
+
+                if (startPoints?.Any() != true || endPoints?.Any() != true)
+                {
+                    const string message = "Both start and end points need to be provided for arrows";
+                    throw new InvalidOperationException(message);
+                }
+                
+                _graphedItems.AddArrow(color, startPoints[0], endPoints[0]);
+            }
+            
+            public void Arrow(object start, object end)
+            {
+                var (_, startPoints) = ParseObject(start);
+                var (_, endPoints) = ParseObject(end);
+
+                if (startPoints?.Any() != true || endPoints?.Any() != true)
+                {
+                    const string message = "Both start and end points need to be provided for arrows";
+                    throw new InvalidOperationException(message);
+                }
+                
+                _graphedItems.AddArrow(Color.White, startPoints[0], endPoints[0]);
+            }
+
             private static (Color color, Point2d[] points) ParseObjects(params object[] objects)
             {
                 // JInt will always call this as an array of objects, so we'll have to manually parse each argument out
@@ -125,82 +155,96 @@ namespace SharpPlotter.Scripting
                 var points = new List<Point2d>();
                 foreach (var obj in objects)
                 {
-                    switch (obj)
+                    var (parsedColor, parsedPoints) = ParseObject(obj);
+                    if (parsedColor != null)
                     {
-                        case null:
-                            throw new PointConversionException("Cannot convert `null` to a point");
-                        
-                        case Color passedInColor:
-                            color = passedInColor;
-                            break;
-                        
-                        // Check if an array of 2 points were passed in, i.e. [1,2] for x=1,y=2
-                        case object[] objArray when objArray.Length == 2 && 
-                                                    (objArray[0] is float || objArray[0] is int || objArray[0] is double) &&
-                                                    (objArray[1] is float || objArray[1] is int || objArray[1] is double):
-                        {
-                            var x = (float) Convert.ToDouble(objArray[0]);
-                            var y = (float) Convert.ToDouble(objArray[1]);
-
-                            points.Add(new Point2d(x, y));
-                            break;
-                        }
-                        
-                        // If a `Color` was passed in before the array of points, then the array of points will be its own
-                        // object array.  Thus we need to parse the inner array 
-                        case object[] objArray2:
-                            var (_, innerPoints) = ParseObjects(objArray2);
-                            points.AddRange(innerPoints);
-                            break;
-                        
-                        // If using the custom `p()` function then we will have actual Point2d objects
-                        case Point2d point:
-                            points.Add(point);
-                            break;
-                        
-                        // Check if this is a javascript object with an x and y property, i.e. {x:1,y:2}
-                        case ExpandoObject expandoObject when expandoObject.Any(x => x.Key.Equals("x", StringComparison.OrdinalIgnoreCase)) && expandoObject.Any(x => x.Key.Equals("y", StringComparison.OrdinalIgnoreCase)):
-                        {
-                            var x = (float?) null;
-                            var y = (float?) null;
-
-                            foreach (var (key, value) in expandoObject)
-                            {
-                                if (key.Equals("x", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    x = value switch
-                                    {
-                                        int intVal => intVal,
-                                        float floatVal => floatVal,
-                                        double doubleVal => (float) doubleVal,
-                                        _ => (float?) null
-                                    };
-                                }
-
-                                if (key.Equals("y", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    y = value switch
-                                    {
-                                        int intVal => intVal,
-                                        float floatVal => floatVal,
-                                        double doubleVal => (float) doubleVal,
-                                        _ => (float?) null
-                                    };
-                                }
-                            }
-
-                            points.Add(new Point2d(x.Value, y.Value));
-                            break;
-                        }
-                        
-                        // No known way to parse out the point
-                        default:
-                            var json = JsonConvert.SerializeObject(obj);
-                            throw new PointConversionException($"No known way to convert '{json}' to a point");
+                        color = parsedColor.Value;
+                    }
+                    else if (parsedPoints != null && parsedPoints.Any())
+                    {
+                        points.AddRange(parsedPoints);
+                    }
+                    else
+                    {
+                        const string message = "Invalid objects passed in, was not a color or point";
+                        throw new InvalidOperationException(message);
                     }
                 }
 
                 return (color, points.ToArray());
+            }
+
+            private static (Color? color, Point2d[] points) ParseObject(object obj)
+            {
+                switch (obj)
+                {
+                    case null:
+                        throw new PointConversionException("Cannot convert `null` to a point");
+
+                    case Color passedInColor:
+                        return (passedInColor, null);
+
+                    // Check if an array of 2 points were passed in, i.e. [1,2] for x=1,y=2
+                    case object[] objArray when objArray.Length == 2 &&
+                                                (objArray[0] is float || objArray[0] is int || objArray[0] is double) &&
+                                                (objArray[1] is float || objArray[1] is int || objArray[1] is double):
+                    {
+                        var x = (float) Convert.ToDouble(objArray[0]);
+                        var y = (float) Convert.ToDouble(objArray[1]);
+
+                        return (null, new[] {new Point2d(x, y)});
+                    }
+
+                    // If a `Color` was passed in before the array of points, then the array of points will be its own
+                    // object array.  Thus we need to parse the inner array 
+                    case object[] objArray2:
+                        return ParseObjects(objArray2);
+
+                    // If using the custom `p()` function then we will have actual Point2d objects
+                    case Point2d point:
+                        return (null, new[] {point});
+
+                    // Check if this is a javascript object with an x and y property, i.e. {x:1,y:2}
+                    case ExpandoObject expandoObject
+                        when expandoObject.Any(x => x.Key.Equals("x", StringComparison.OrdinalIgnoreCase)) &&
+                             expandoObject.Any(x => x.Key.Equals("y", StringComparison.OrdinalIgnoreCase)):
+                    {
+                        var x = (float?) null;
+                        var y = (float?) null;
+
+                        foreach (var (key, value) in expandoObject)
+                        {
+                            if (key.Equals("x", StringComparison.OrdinalIgnoreCase))
+                            {
+                                x = value switch
+                                {
+                                    int intVal => intVal,
+                                    float floatVal => floatVal,
+                                    double doubleVal => (float) doubleVal,
+                                    _ => (float?) null
+                                };
+                            }
+
+                            if (key.Equals("y", StringComparison.OrdinalIgnoreCase))
+                            {
+                                y = value switch
+                                {
+                                    int intVal => intVal,
+                                    float floatVal => floatVal,
+                                    double doubleVal => (float) doubleVal,
+                                    _ => (float?) null
+                                };
+                            }
+                        }
+
+                        return (null, new[] {new Point2d(x.Value, y.Value)});
+                    }
+
+                    // No known way to parse out the point
+                    default:
+                        var json = JsonConvert.SerializeObject(obj);
+                        throw new PointConversionException($"No known way to convert '{json}' to a point");
+                }
             }
         }
     }

@@ -27,6 +27,7 @@ namespace SharpPlotter.Scripting
 #    * `graph.Points()` can draw one or more isolated points (e.g. `graph.Points((1,2), (3,4), (4,0))`)
 #    * `graph.Segments()` can draw line segments from one point to the next (e.g. `graph.Segments((1,2), (3,4), (4,0))`)
 #    * `graph.Function()` can draw an unbounded function for each visible X value (e.g. `graph.Function(lambda x: x * x)`)
+#    * `graph.Arrow()` can draw an arrow from a start point to an end point (e.g. `graph.Arrow((1,1), (2,2))`
 #    * `graph.Log()` displays a text message to the screen (useful for debugging and non-graph output)
 #
 # All functions except `Log()` can optionally take a color value as the first parameter to change what color each
@@ -113,6 +114,34 @@ namespace SharpPlotter.Scripting
             {
                 _graphedItems.AddFunction(Color.White, function);
             }
+            
+            public void Arrow(Color color, object start, object end)
+            {
+                var (_, startPoints) = ParseObject(start);
+                var (_, endPoints) = ParseObject(end);
+
+                if (startPoints?.Any() != true || endPoints?.Any() != true)
+                {
+                    const string message = "Both start and end points need to be provided for arrows";
+                    throw new InvalidOperationException(message);
+                }
+                
+                _graphedItems.AddArrow(color, startPoints[0], endPoints[0]);
+            }
+            
+            public void Arrow(object start, object end)
+            {
+                var (_, startPoints) = ParseObject(start);
+                var (_, endPoints) = ParseObject(end);
+
+                if (startPoints?.Any() != true || endPoints?.Any() != true)
+                {
+                    const string message = "Both start and end points need to be provided for arrows";
+                    throw new InvalidOperationException(message);
+                }
+                
+                _graphedItems.AddArrow(Color.White, startPoints[0], endPoints[0]);
+            }
 
             private static (Color color, Point2d[] points) ParseObjects(params object[] objects)
             {
@@ -121,42 +150,57 @@ namespace SharpPlotter.Scripting
                 var points = new List<Point2d>();
                 foreach (var obj in objects)
                 {
-                    switch (obj)
+                    var (parsedColor, parsedPoints) = ParseObject(obj);
+                    if (parsedColor != null)
                     {
-                        case null:
-                            throw new PointConversionException("Cannot convert `null` to a point");
-                        
-                        case Color passedInColor:
-                            color = passedInColor;
-                            break;
-
-                        case PythonTuple pythonTuple when pythonTuple.Count == 2 &&
-                                                          (pythonTuple[0] is double || pythonTuple[0] is int ||
-                                                           pythonTuple[0] is float) &&
-                                                          (pythonTuple[1] is double || pythonTuple[1] is int ||
-                                                           pythonTuple[1] is float):
-                        {
-                            var x = (float) Convert.ToDouble(pythonTuple[0]);
-                            var y = (float) Convert.ToDouble(pythonTuple[1]);
-                            
-                            points.Add(new Point2d(x, y));
-                            break;
-                        }
-                        
-                        // Iron python passes in arrays as a generic List
-                        case List list:
-                            var (_, innerPoints) = ParseObjects(list.ToArray());
-                            points.AddRange(innerPoints);
-                            break;
-                            
-                        // No known way to parse out the point
-                        default:
-                            var json = JsonConvert.SerializeObject(obj);
-                            throw new PointConversionException($"No known way to convert '{json}' to a point");
+                        color = parsedColor.Value;
+                    }
+                    else if (parsedPoints != null && parsedPoints.Any())
+                    {
+                        points.AddRange(parsedPoints);
+                    }
+                    else
+                    {
+                        const string message = "Invalid objects passed in, was not a color or point";
+                        throw new InvalidOperationException(message);
                     }
                 }
 
                 return (color, points.ToArray());
+            }
+
+            private static (Color? color, Point2d[] points) ParseObject(object obj)
+            {
+                switch (obj)
+                {
+                    case null:
+                        throw new PointConversionException("Cannot convert `null` to a point");
+
+                    case Color passedInColor:
+                        return (passedInColor, null);
+
+                    case PythonTuple pythonTuple when pythonTuple.Count == 2 &&
+                                                      (pythonTuple[0] is double || pythonTuple[0] is int ||
+                                                       pythonTuple[0] is float) &&
+                                                      (pythonTuple[1] is double || pythonTuple[1] is int ||
+                                                       pythonTuple[1] is float):
+                    {
+                        var x = (float) Convert.ToDouble(pythonTuple[0]);
+                        var y = (float) Convert.ToDouble(pythonTuple[1]);
+                        
+                        return (null, new[] {new Point2d(x, y)});
+                    }
+
+                    // Iron python passes in arrays as a generic List
+                    case List list:
+                        var (_, innerPoints) = ParseObjects(list.ToArray());
+                        return (null, innerPoints);
+
+                    // No known way to parse out the point
+                    default:
+                        var json = JsonConvert.SerializeObject(obj);
+                        throw new PointConversionException($"No known way to convert '{json}' to a point");
+                }
             }
         }
     }

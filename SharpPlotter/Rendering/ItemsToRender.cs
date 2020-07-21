@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace SharpPlotter.Rendering
@@ -7,14 +8,17 @@ namespace SharpPlotter.Rendering
         public IReadOnlyList<RenderedPoint> Points { get; }
         public IReadOnlyList<RenderedSegment> Segments { get; }
         public IReadOnlyList<RenderedFunction> Functions { get; }
+        public IReadOnlyList<RenderedArrow> Arrows { get; }
         
         public ItemsToRender(IReadOnlyList<RenderedPoint> points, 
             IReadOnlyList<RenderedSegment> segments, 
-            IReadOnlyList<RenderedFunction> functions)
+            IReadOnlyList<RenderedFunction> functions, 
+            IReadOnlyList<RenderedArrow> arrows)
         {
-            Points = points;
-            Segments = segments;
-            Functions = functions;
+            Points = points ?? Array.Empty<RenderedPoint>();
+            Segments = segments ?? Array.Empty<RenderedSegment>();
+            Functions = functions ?? Array.Empty<RenderedFunction>();
+            Arrows = arrows ?? Array.Empty<RenderedArrow>();
         }
     }
 }

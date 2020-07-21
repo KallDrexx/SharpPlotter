@@ -23,6 +23,7 @@ namespace SharpPlotter.Scripting
 //    * `Graph.Points()` draws one or more isolated points at the specified positions (e.g. `Graph.Points((1,2), (3,4))`)
 //    * `Graph.Segments()` draws line segments from one point to the next (e.g. `Graph.Segments((1,2), (3,4), (4,0))`)
 //    * `Graph.Function()` draws an unbounded function for each X graph value visible (e.g. `Graph.Function(x => x * x)`)
+//    * `Graph.Arrow()` draws an arrow for a starting and ending point (e.g. `Graph.Arrow((1,1), (2,2))`)
 //    * `Graph.Log()` will show a text message on the screen (can be helpful for debugging or non-graph values)
 //
 // All graphing functions except `Log()` can have the first parameter as a color value to change what color they are
@@ -193,6 +194,20 @@ using System.Linq;
             public void Function(Color color, Func<float, float> function)
             {
                 _graphedItems.AddFunction(color, function);
+            }
+
+            public void Arrow(Color color, (double x, double y) start, (double x, double y) end)
+            {
+                _graphedItems.AddArrow(color, 
+                    new Point2d((float) start.x, (float) start.y),
+                    new Point2d((float) end.x, (float) end.y));
+            }
+            
+            public void Arrow((double x, double y) start, (double x, double y) end)
+            {
+                _graphedItems.AddArrow(Color.White, 
+                    new Point2d((float) start.x, (float) start.y),
+                    new Point2d((float) end.x, (float) end.y));
             }
         }
     }

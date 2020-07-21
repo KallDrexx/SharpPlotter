@@ -153,7 +153,7 @@ namespace SharpPlotter.Rendering
         /// Sets the camera to a predefined position and field of view that guarantees all 4 edges of the screen
         /// represent the defined boundary points on the graph
         /// </summary>
-        public void SetGraphBounds((int min, int max) x, (int min, int max) y)
+        public void SetGraphBounds((float min, float max) x, (float min, float max) y)
         {
             if (x.min >= x.max || y.min >= y.max)
             {
@@ -168,8 +168,8 @@ namespace SharpPlotter.Rendering
             // points.
             const int boundsBufferInPixels = 40;
             
-            _basePixelsPerXUnit = (_usableWidth - boundsBufferInPixels * 2) / (x.max - x.min);
-            _basePixelsPerYUnit = (_usableHeight - boundsBufferInPixels * 2) / (y.max - y.min);
+            _basePixelsPerXUnit = (int)((_usableWidth - boundsBufferInPixels * 2) / (x.max - x.min));
+            _basePixelsPerYUnit = (int)((_usableHeight - boundsBufferInPixels * 2) / (y.max - y.min));
 
             var originX = x.max - (x.max - x.min) / 2f;
             var originY = y.max - (y.max - y.min) / 2f;
@@ -206,19 +206,19 @@ namespace SharpPlotter.Rendering
             return new Point2d(gridX, gridY);
         }
 
-        public SKImage Render(IReadOnlyList<RenderedPoint> points, 
-            IReadOnlyList<RenderedSegment> segments,
-            IReadOnlyList<RenderedFunction> functions)
+        public SKImage Render(ItemsToRender itemsToRender)
         {
-            points ??= Array.Empty<RenderedPoint>();
-            segments ??= Array.Empty<RenderedSegment>();
-            functions ??= Array.Empty<RenderedFunction>();
+            var points = itemsToRender?.Points ?? Array.Empty<RenderedPoint>();
+            var segments = itemsToRender?.Segments ?? Array.Empty<RenderedSegment>();
+            var functions = itemsToRender?.Functions ?? Array.Empty<RenderedFunction>();
+            var arrows = itemsToRender?.Arrows ?? Array.Empty<RenderedArrow>();
             
             _surface.Canvas.Clear(SKColors.Black);
             RenderGridLines();
             RenderSegments(segments);
             RenderPoints(points);
             RenderFunctions(functions);
+            RenderArrows(arrows);
 
             CameraHasMoved = false;
             
@@ -317,6 +317,60 @@ namespace SharpPlotter.Rendering
                     lastPoint = currentPoint;
                     currentColumn += FunctionPixelResolution;
                 }
+            }
+        }
+
+        private void RenderArrows(IEnumerable<RenderedArrow> arrows)
+        {
+            foreach (var arrow in arrows)
+            {
+                var paint = new SKPaint
+                {
+                    Color = new SKColor(arrow.Color.R, arrow.Color.G, arrow.Color.B),
+                    Style = SKPaintStyle.Fill,
+                };
+                
+                var graphStartX = GetPixelXForGraphValue(arrow.Start.X);
+                var graphStartY = GetPixelYForGraphValue(arrow.Start.Y);
+                var graphEndX = GetPixelXForGraphValue(arrow.End.X);
+                var graphEndY = GetPixelYForGraphValue(arrow.End.Y);
+                
+                _surface.Canvas.DrawLine(graphStartX, graphStartY, graphEndX, graphEndY, paint);
+                
+                // Draw triangle pointing at the end point
+                const float sideLength = 10;
+                const double halfTriangleAngleRadians = 30 * (Math.PI / 180); // assumes equilateral triangle
+
+                var changeInX = (float) graphEndX - graphStartX;
+                var changeInY = (float) graphEndY - graphStartY; // Start - end since canvas pixels are larger on the bottom
+                
+                // We need to "rotate" the calculated angle by 180 degrees due to the Y axis being reversed on the 
+                // canvas (Y increases as we go down canvas).
+                var lineAngleInRadians = Math.PI + Math.Atan2(changeInY,  changeInX);
+                if (double.IsNaN(lineAngleInRadians))
+                {
+                    lineAngleInRadians = 0;
+                }
+                
+                // We know how long the left and right sides are, so we can find out where each end point is by 
+                // visualizing a circle of `sideLength` radius, and use trig to find the x and y offsets to the rotated
+                // of the point after it has been rotated by the same angle as the line angle
+                var leftYAdjust = (float)(sideLength * Math.Sin(lineAngleInRadians + halfTriangleAngleRadians));
+                var leftXAdjust = (float)(sideLength * Math.Cos(lineAngleInRadians + halfTriangleAngleRadians));
+                var rightYAdjust = (float)(sideLength * Math.Sin(lineAngleInRadians - halfTriangleAngleRadians));
+                var rightXAdjust = (float)(sideLength * Math.Cos(lineAngleInRadians - halfTriangleAngleRadians));
+                
+                var point1 = new SKPoint(graphEndX, graphEndY);
+                var point2 = new SKPoint(graphEndX + leftXAdjust, graphEndY + leftYAdjust);
+                var point3 = new SKPoint(graphEndX + rightXAdjust, graphEndY + rightYAdjust);
+                
+                var path = new SKPath();
+                path.MoveTo(point1);
+                path.LineTo(point2);
+                path.LineTo(point3);
+                path.Close();
+                
+                _surface.Canvas.DrawPath(path, paint);
             }
         }
 

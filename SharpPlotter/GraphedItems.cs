@@ -14,6 +14,7 @@ namespace SharpPlotter
         private readonly List<RenderedPoint> _points = new List<RenderedPoint>();
         private readonly List<RenderedSegment> _segments = new List<RenderedSegment>();
         private readonly List<RenderedFunction> _functions = new List<RenderedFunction>();
+        private readonly List<RenderedArrow> _arrows = new List<RenderedArrow>();
 
         public Queue<string> Messages { get; } = new Queue<string>();
         
@@ -80,6 +81,15 @@ namespace SharpPlotter
             
             _functions.Add(new RenderedFunction(color, function));
         }
+
+        /// <summary>
+        /// Adds a line segment with a pointer at the end from the starting point to and ending point
+        /// </summary>
+        public void AddArrow(Color color, Point2d start, Point2d end)
+        {
+            _arrows.Add(new RenderedArrow(start, end, color));
+            GraphItemsUpdated();
+        }
         
         /// <summary>
         /// Provides the list of items that should be rendered.  This will reset `ItemsChangedSinceLastRender`
@@ -87,7 +97,7 @@ namespace SharpPlotter
         internal ItemsToRender GetItemsToRender()
         {
             ItemsChangedSinceLastRender = false;
-            return new ItemsToRender(_points, _segments, _functions);
+            return new ItemsToRender(_points, _segments, _functions, _arrows);
         }
 
         private void GraphItemsUpdated()
@@ -95,8 +105,10 @@ namespace SharpPlotter
             ItemsChangedSinceLastRender = true;
             
             var allCoordinates = _points.Select(x => x.Point)
+                .Union(_segments.Select(x => x.Start))
                 .Union(_segments.Select(x => x.End))
-                .Union(_segments.Select(x => x.End))
+                .Union(_arrows.Select(x => x.Start))
+                .Union(_arrows.Select(x => x.End))
                 .Distinct()
                 .ToArray();
 
@@ -123,95 +135,6 @@ namespace SharpPlotter
                 MinCoordinates = null;
                 MaxCoordinates = null;
             }
-        }
-
-        private Point2d ConvertObjectToPoint2d(object obj)
-        {
-            if (obj == null)
-            {
-                throw new PointConversionException("Cannot convert `null` to a valid point");
-            }
-
-            if (obj is Point2d point)
-            {
-                return point;
-            }
-
-            if (obj is ValueTuple<int, int> intTuple)
-            {
-                return new Point2d(intTuple.Item1, intTuple.Item2);
-            }
-
-            if (obj is ValueTuple<double, double> doubleTuple)
-            {
-                return new Point2d((float) doubleTuple.Item1, (float) doubleTuple.Item2);
-            }
-
-            if (obj is ValueTuple<float, float> floatTuple)
-            {
-                return new Point2d(floatTuple.Item1, floatTuple.Item2);
-            }
-
-            if (obj is object[] objArray && 
-                objArray.Length == 2 &&
-                (objArray[0] is float || objArray[0] is int || objArray[0] is double) &&
-                (objArray[1] is float || objArray[1] is int || objArray[1] is double))
-            {
-                var x = (float) Convert.ToDouble(objArray[0]);
-                var y = (float) Convert.ToDouble(objArray[1]);
-                
-                return new Point2d(x, y);
-            }
-
-            if (obj is PythonTuple pythonTuple &&
-                pythonTuple.Count == 2 &&
-                (pythonTuple[0] is float || pythonTuple[0] is int || pythonTuple[0] is double) &&
-                (pythonTuple[1] is float || pythonTuple[1] is int || pythonTuple[1] is double))
-            {
-                var x = (float) Convert.ToDouble(pythonTuple[0]);
-                var y = (float) Convert.ToDouble(pythonTuple[1]);
-                
-                return new Point2d(x, y);
-            }
-
-            if (obj is ExpandoObject expandoObject)
-            {
-                var x = (float?) null;
-                var y = (float?) null;
-                
-                foreach (var (key, value) in expandoObject)
-                {
-                    if (key.Equals("x", StringComparison.OrdinalIgnoreCase))
-                    {
-                        x = value switch
-                        {
-                            int intVal => intVal,
-                            float floatVal => floatVal,
-                            double doubleVal => (float) doubleVal,
-                            _ => (float?) null
-                        };
-                    }
-                    
-                    if (key.Equals("y", StringComparison.OrdinalIgnoreCase))
-                    {
-                        y = value switch
-                        {
-                            int intVal => intVal,
-                            float floatVal => floatVal,
-                            double doubleVal => (float) doubleVal,
-                            _ => (float?) null
-                        };
-                    }
-                }
-
-                if (x != null && y != null)
-                {
-                    return new Point2d(x.Value, y.Value);
-                }
-            }
-
-            var json = JsonConvert.SerializeObject(obj);
-            throw new PointConversionException($"Cannot convert object to a point: '{json}'");
         }
     }
 }
