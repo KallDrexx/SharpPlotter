@@ -89,7 +89,7 @@ namespace SharpPlotter.Scripting
 
             if (!File.Exists(fullPath))
             {
-                throw new FileNotFoundException($"The file '{fileName}' does not exist in the script directory");
+                throw new FileNotFoundException($"The file '{fileName}' does not exist in the script directory", fullPath);
             }
             
             CurrentLanguage = language;

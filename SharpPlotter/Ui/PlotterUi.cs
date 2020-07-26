@@ -123,18 +123,25 @@ namespace SharpPlotter.Ui
 
         private void OpenScriptFile(string fileName)
         {
+            _onScreenLogger.Clear();
+            
             try
             {
                 _scriptManager.OpenExistingScript(fileName?.Trim());
             }
+            catch (FileNotFoundException exception)
+            {
+                _onScreenLogger.LogMessage($"The file '{exception.FileName}' does not exist");
+                
+                // If this file is a recently opened, remove it from the list
+                _appSettings.RecentlyOpenedFiles.Remove(fileName);
+            }
             catch (Exception exception)
             {
                 _onScreenLogger.LogMessage($"Exception opening file: {exception.Message}");
-                return;
             }
             
             SettingsIo.Save(_appSettings);
-            _onScreenLogger.Clear();
         }
     }
 }
