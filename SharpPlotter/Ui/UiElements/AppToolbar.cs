@@ -135,6 +135,11 @@ namespace SharpPlotter.Ui.UiElements
                     {
                         if (!_scriptFileListLoaded)
                         {
+                            if (!Directory.Exists(_appSettings.ScriptFolderPath))
+                            {
+                                Directory.CreateDirectory(_appSettings.ScriptFolderPath);
+                            }
+                            
                             var files = Directory.GetFiles(_appSettings.ScriptFolderPath)
                                 .Select(x => x.Replace(_appSettings.ScriptFolderPath, "", StringComparison.OrdinalIgnoreCase))
                                 .Select(x => x.StartsWith("\\") || x.StartsWith("/") ? x.Substring(1) : x)
