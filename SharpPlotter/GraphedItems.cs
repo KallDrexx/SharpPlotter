@@ -15,6 +15,7 @@ namespace SharpPlotter
         private readonly List<RenderedSegment> _segments = new List<RenderedSegment>();
         private readonly List<RenderedFunction> _functions = new List<RenderedFunction>();
         private readonly List<RenderedArrow> _arrows = new List<RenderedArrow>();
+        private readonly List<RenderedPolygon> _polygons = new List<RenderedPolygon>();
 
         public Queue<string> Messages { get; } = new Queue<string>();
         
@@ -90,6 +91,15 @@ namespace SharpPlotter
             _arrows.Add(new RenderedArrow(start, end, color));
             GraphItemsUpdated();
         }
+
+        public void AddPolygon(Color color, IEnumerable<Point2d> points)
+        {
+            points ??= Array.Empty<Point2d>();
+            
+            var polygon = new RenderedPolygon(color, points);
+            _polygons.Add(polygon);
+            GraphItemsUpdated();
+        }
         
         /// <summary>
         /// Provides the list of items that should be rendered.  This will reset `ItemsChangedSinceLastRender`
@@ -97,7 +107,7 @@ namespace SharpPlotter
         internal ItemsToRender GetItemsToRender()
         {
             ItemsChangedSinceLastRender = false;
-            return new ItemsToRender(_points, _segments, _functions, _arrows);
+            return new ItemsToRender(_points, _segments, _functions, _arrows, _polygons);
         }
 
         private void GraphItemsUpdated()

@@ -1,3 +1,4 @@
+// ReSharper disable UnusedMember.Local
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -32,6 +33,7 @@ namespace SharpPlotter.Scripting
 //    * `graph.Segments()` allows drawing line segments from one point to the next (e.g. `graph.Segments(p(1,2), p(3,4), p(4,0));`)
 //    * `graph.Function()` allows drawing an unbounded function for each x value (e.g. `graph.Function(function(x) { return x*x;});`)
 //    * `graph.Arrow()` allows drawing an arrow from a starting point to an ending point (e.g. `graph.Arrow(p(1,1), p(2,2));`)
+//    * `graph.Polygon()` allows drawing a filled in polygon between 3 or more points (e.g. `graph.Polygon(p(1,1), p(2,2), p(3,0));`)
 //    * `graph.Log()` allows displaying a text message on the screen (can be used for debugging).
 //
 // All graph functions except `Log()` can have a first parameter being a color value to change the color of the 
@@ -88,6 +90,14 @@ namespace SharpPlotter.Scripting
                 var (color, points) = ParseObjects(objects);
                 
                 _graphedItems.AddSegments(color, points);
+            }
+
+            public void Polygon(params object[] objects)
+            {
+                objects ??= Array.Empty<object>();
+                var (color, points) = ParseObjects(objects);
+
+                _graphedItems.AddPolygon(color, points);
             }
 
             public void Log(string message)

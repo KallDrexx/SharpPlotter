@@ -1,3 +1,4 @@
+// ReSharper disable UnusedMember.Global
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +28,8 @@ namespace SharpPlotter.Scripting
 #    * `graph.Points()` can draw one or more isolated points (e.g. `graph.Points((1,2), (3,4), (4,0))`)
 #    * `graph.Segments()` can draw line segments from one point to the next (e.g. `graph.Segments((1,2), (3,4), (4,0))`)
 #    * `graph.Function()` can draw an unbounded function for each visible X value (e.g. `graph.Function(lambda x: x * x)`)
-#    * `graph.Arrow()` can draw an arrow from a start point to an end point (e.g. `graph.Arrow((1,1), (2,2))`
+#    * `graph.Arrow()` can draw an arrow from a start point to an end point (e.g. `graph.Arrow((1,1), (2,2))`)
+#    * `graph.Polygon()` can draw a filled in polygon defined by 3 or more points (e.g. `graph.Polygon((1,1), (2,2), (3,0))`)
 #    * `graph.Log()` displays a text message to the screen (useful for debugging and non-graph output)
 #
 # All functions except `Log()` can optionally take a color value as the first parameter to change what color each
@@ -95,6 +97,13 @@ namespace SharpPlotter.Scripting
                 objects ??= Array.Empty<object>();
                 var (color, points) = ParseObjects(objects);
                 _graphedItems.AddSegments(color, points);
+            }
+
+            public void Polygon(params object[] objects)
+            {
+                objects ??= Array.Empty<object>();
+                var (color, points) = ParseObjects(objects);
+                _graphedItems.AddPolygon(color, points);
             }
 
             public void Log(string message)

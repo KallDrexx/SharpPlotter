@@ -25,6 +25,7 @@ namespace SharpPlotter.Scripting
 //    * `Graph.Segments()` draws line segments from one point to the next (e.g. `Graph.Segments((1,2), (3,4), (4,0))`)
 //    * `Graph.Function()` draws an unbounded function for each X graph value visible (e.g. `Graph.Function(x => x * x)`)
 //    * `Graph.Arrow()` draws an arrow for a starting and ending point (e.g. `Graph.Arrow((1,1), (2,2))`)
+//    * `Graph.Polygon()` draws a filled in polygon between 3 or more points (e.g. `Graph.Polygon((1,1), (2,2), (3,0))`)
 //    * `Graph.Log()` will show a text message on the screen (can be helpful for debugging or non-graph values)
 //
 // All graphing functions except `Log()` can have the first parameter as a color value to change what color they are
@@ -225,6 +226,78 @@ using System.Linq;
             {
                 points ??= Array.Empty<(float, float)>();
                 _graphedItems.AddSegments(color, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+
+            public void Polygon(IEnumerable<(int x, int y)> points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddPolygon(Color.White, points.Select(p => new Point2d(p.x, p.y)));
+            }
+
+            public void Polygon(Color color, IEnumerable<(int x, int y)> points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddPolygon(color, points.Select(p => new Point2d(p.x, p.y)));
+            }
+
+            public void Polygon(params (int x, int y)[] points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddPolygon(Color.White, points.Select(p => new Point2d(p.x, p.y)));
+            }
+
+            public void Polygon(Color color, params (int x, int y)[] points)
+            {
+                points ??= Array.Empty<(int, int)>();
+                _graphedItems.AddPolygon(color, points.Select(p => new Point2d(p.x, p.y)));
+            }
+
+            public void Polygon(IEnumerable<(float x, float y)> points)
+            {
+                points ??= Array.Empty<(float, float)>();
+                _graphedItems.AddPolygon(Color.White, points.Select(p => new Point2d(p.x, p.y)));
+            }
+
+            public void Polygon(Color color, IEnumerable<(float x, float y)> points)
+            {
+                points ??= Array.Empty<(float, float)>();
+                _graphedItems.AddPolygon(color, points.Select(p => new Point2d(p.x, p.y)));
+            }
+
+            public void Polygon(params (float x, float y)[] points)
+            {
+                points ??= Array.Empty<(float, float)>();
+                _graphedItems.AddPolygon(Color.White, points.Select(p => new Point2d(p.x, p.y)));
+            }
+
+            public void Polygon(Color color, params (float x, float y)[] points)
+            {
+                points ??= Array.Empty<(float, float)>();
+                _graphedItems.AddPolygon(color, points.Select(p => new Point2d(p.x, p.y)));
+            }
+
+            public void Polygon(IEnumerable<(double x, double y)> points)
+            {
+                points ??= Array.Empty<(double, double)>();
+                _graphedItems.AddPolygon(Color.White, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+
+            public void Polygon(Color color, IEnumerable<(double x, double y)> points)
+            {
+                points ??= Array.Empty<(double, double)>();
+                _graphedItems.AddPolygon(color, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+
+            public void Polygon(params (double x, double y)[] points)
+            {
+                points ??= Array.Empty<(double, double)>();
+                _graphedItems.AddPolygon(Color.White, points.Select(p => new Point2d((float) p.x, (float) p.y)));
+            }
+
+            public void Polygon(Color color, params (double x, double y)[] points)
+            {
+                points ??= Array.Empty<(double, double)>();
+                _graphedItems.AddPolygon(color, points.Select(p => new Point2d((float) p.x, (float) p.y)));
             }
 
             public void Log(string message)

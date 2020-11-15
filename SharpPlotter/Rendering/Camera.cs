@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.CodeAnalysis;
 using SkiaSharp;
 
 namespace SharpPlotter.Rendering
@@ -239,9 +240,11 @@ namespace SharpPlotter.Rendering
             var segments = itemsToRender?.Segments ?? Array.Empty<RenderedSegment>();
             var functions = itemsToRender?.Functions ?? Array.Empty<RenderedFunction>();
             var arrows = itemsToRender?.Arrows ?? Array.Empty<RenderedArrow>();
+            var polygons = itemsToRender?.Polygons ?? Array.Empty<RenderedPolygon>();
             
             _surface.Canvas.Clear(SKColors.Black);
             RenderGridLines();
+            RenderPolygons(polygons);
             RenderSegments(segments);
             RenderPoints(points);
             RenderFunctions(functions);
@@ -309,6 +312,38 @@ namespace SharpPlotter.Rendering
                 var color = new SKColor(segment.Color.R, segment.Color.G, segment.Color.B);
                 
                 _surface.Canvas.DrawLine(start, end, new SKPaint{Color = color});
+            }
+        }
+
+        private void RenderPolygons(IEnumerable<RenderedPolygon> polygons)
+        {
+            foreach (var polygon in polygons)
+            {
+                var path = new SKPath();
+                for (var x = 0; x < polygon.Points.Count; x++)
+                {
+                    var xPos = GetPixelXForGraphValue(polygon.Points[x].X);
+                    var yPos = GetPixelYForGraphValue(polygon.Points[x].Y);
+                    
+                    if (x == 0)
+                    {
+                        path.MoveTo(xPos, yPos);
+                    }
+                    else
+                    {
+                        path.LineTo(xPos, yPos);
+                    }
+                }
+                
+                path.Close();
+                var color = new SKColor(polygon.FillColor.R, polygon.FillColor.G, polygon.FillColor.B);
+                var paint = new SKPaint
+                {
+                    Color = color,
+                    Style = SKPaintStyle.Fill
+                };
+                
+                _surface.Canvas.DrawPath(path, paint);
             }
         }
 
