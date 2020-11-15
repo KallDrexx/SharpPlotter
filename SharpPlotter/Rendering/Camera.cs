@@ -42,6 +42,7 @@ namespace SharpPlotter.Rendering
         private int _basePixelsPerXUnit, _basePixelsPerYUnit;
         private Point2d _origin;
         private float _zoomFactor;
+        private bool _hideGridLines;
 
         /// <summary>
         /// The X/Y coordinates on the graph the camera is centered on
@@ -74,6 +75,19 @@ namespace SharpPlotter.Rendering
                     CameraHasMoved = true;
                     RecalculateGraphBounds();
                 }
+            }
+        }
+
+        /// <summary>
+        /// When true, the grid lines will not be rendered
+        /// </summary>
+        public bool HideGridLines
+        {
+            get => _hideGridLines;
+            set
+            {
+                _hideGridLines = value;
+                CameraHasMoved = true;
             }
         }
         
@@ -421,7 +435,11 @@ namespace SharpPlotter.Rendering
 
             var start = new SKPoint(pixelX, GridLineMargin);
             var end = new SKPoint(pixelX, _height - GridLineMargin);
-            _surface.Canvas.DrawLine(start, end, linePaint);
+            
+            if (!HideGridLines)
+            {
+                _surface.Canvas.DrawLine(start, end, linePaint);
+            }
 
             var labelPoint = new SKPoint(pixelX, end.Y + 15);
             _surface.Canvas.DrawText(value.ToString(), labelPoint, skPaint);
@@ -442,7 +460,11 @@ namespace SharpPlotter.Rendering
 
             var start = new SKPoint(GridLineMargin, pixelY);
             var end = new SKPoint(_width - GridLineMargin, pixelY);
-            _surface.Canvas.DrawLine(start, end, linePaint);
+            
+            if (!HideGridLines)
+            {
+                _surface.Canvas.DrawLine(start, end, linePaint);
+            }
 
             var labelPoint = new SKPoint(GridLineMargin, pixelY);
             _surface.Canvas.DrawText(value.ToString(), labelPoint, skPaint);

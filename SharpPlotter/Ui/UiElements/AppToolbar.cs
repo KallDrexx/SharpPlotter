@@ -43,6 +43,12 @@ namespace SharpPlotter.Ui.UiElements
             set => Set(value);
         }
 
+        public bool HideGridLines
+        {
+            get => Get<bool>();
+            set => Set(value);
+        }
+
         public AppToolbar(ScriptManager scriptManager, AppSettings appSettings)
         {
             _scriptManager = scriptManager;
@@ -188,6 +194,10 @@ namespace SharpPlotter.Ui.UiElements
                 {
                     ResetCameraRequested?.Invoke(this, EventArgs.Empty);
                 }
+                
+                ImGui.NewLine();
+                
+                Checkbox(nameof(HideGridLines), "Hide Grid Lines");
                 
                 ImGui.NewLine();
                 

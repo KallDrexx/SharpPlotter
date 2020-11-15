@@ -61,7 +61,7 @@ namespace SharpPlotter.MonoGame
 
         protected override void Initialize()
         {
-            _plotterUi = new PlotterUi(this, _appSettings, _scriptManager, _onScreenLogger);
+            _plotterUi = new PlotterUi(this, _appSettings, _scriptManager, _onScreenLogger, _camera);
             _plotterUi.AppToolbar.UpdateCameraOriginRequested += AppToolbarOnUpdateCameraOriginRequested;
             _plotterUi.AppToolbar.UpdateCameraBoundsRequested += AppToolbarOnUpdateCameraBoundsRequested;
             _plotterUi.AppToolbar.ResetCameraRequested += (sender, args) => SetCameraToSizeOfGraphedItems();

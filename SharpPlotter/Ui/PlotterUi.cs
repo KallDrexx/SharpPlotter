@@ -1,8 +1,10 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using ImGuiHandler;
 using ImGuiHandler.MonoGame;
 using Microsoft.Xna.Framework;
+using SharpPlotter.Rendering;
 using SharpPlotter.Scripting;
 using SharpPlotter.Ui.UiElements;
 
@@ -15,17 +17,23 @@ namespace SharpPlotter.Ui
         private readonly AppSettings _appSettings;
         private readonly ScriptManager _scriptManager;
         private readonly OnScreenLogger _onScreenLogger;
+        private readonly Camera _camera;
 
         public AppToolbar AppToolbar { get; }
 
         public bool AcceptingKeyboardInput => _imGuiManager.AcceptingKeyboardInput;
         public bool AcceptingMouseInput => _imGuiManager.AcceptingMouseInput;
 
-        public PlotterUi(Game game, AppSettings appSettings, ScriptManager scriptManager, OnScreenLogger onScreenLogger)
+        public PlotterUi(Game game, 
+            AppSettings appSettings, 
+            ScriptManager scriptManager, 
+            OnScreenLogger onScreenLogger, 
+            Camera camera)
         {
             _appSettings = appSettings;
             _scriptManager = scriptManager;
             _onScreenLogger = onScreenLogger;
+            _camera = camera;
 
             var renderer = new MonoGameImGuiRenderer(game);
             renderer.Initialize();
@@ -45,7 +53,8 @@ namespace SharpPlotter.Ui
             _imGuiManager.AddElement(AppToolbar);
             
             _imGuiManager.AddElement(new ImGuiSettings{IsVisible = true});
-
+        
+            AppToolbar.PropertyChanged += AppToolbarOnPropertyChanged;
             AppToolbar.SettingsClicked += (sender, args) => CreateSettingsWindow();
             AppToolbar.NewClicked += (sender, args) => CreateNewFileDialog();
             AppToolbar.OpenClicked += (sender, args) => OpenScriptFile(args);
@@ -142,6 +151,16 @@ namespace SharpPlotter.Ui
             }
             
             SettingsIo.Save(_appSettings);
+        }
+
+        private void AppToolbarOnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(AppToolbar.HideGridLines):
+                    _camera.HideGridLines = AppToolbar.HideGridLines;
+                    break;
+            }
         }
     }
 }
