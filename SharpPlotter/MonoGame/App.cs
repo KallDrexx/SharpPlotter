@@ -12,14 +12,14 @@ namespace SharpPlotter.MonoGame
 {
     public class App : Game
     {
-        private const int Width = 1024;
-        private const int Height = 768;
-
-        private readonly Camera _camera;
-        private readonly byte[] _rawCanvasPixels;
+        private const int DefaultWidth = 1024;
+        private const int DefaultHeight = 768;
+        
         private readonly ScriptManager _scriptManager;
         private readonly AppSettings _appSettings;
         private readonly OnScreenLogger _onScreenLogger;
+        private Camera _camera;
+        private byte[] _rawCanvasPixels;
         private GraphedItems _graphedItems;
         private SpriteBatch _spriteBatch;
         private Texture2D _graphTexture;
@@ -29,38 +29,36 @@ namespace SharpPlotter.MonoGame
 
         public App()
         {
-            // ReSharper disable once ObjectCreationAsStatement
-            new GraphicsDeviceManager(this)
-            {
-                PreferredBackBufferWidth = Width,
-                PreferredBackBufferHeight = Height,
-                PreferMultiSampling = true
-            };
-
-            IsMouseVisible = true;
-            
             _appSettings = SettingsIo.Load() ?? new AppSettings
             {
-                ScriptFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal),
-                    "SharpPlotter"),
+                ScriptFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "SharpPlotter"),
                 TextEditorExecutable = "code",
             };
             
+            // ReSharper disable once ObjectCreationAsStatement
+            new GraphicsDeviceManager(this)
+            {
+                PreferMultiSampling = true,
+                PreferredBackBufferWidth = DefaultWidth,
+                PreferredBackBufferHeight = DefaultHeight,
+            };
+            
+            IsMouseVisible = true;
             _onScreenLogger = new OnScreenLogger();
             _onScreenLogger.LogMessage(OnLoadText());
 
-            _camera = new Camera(Width, Height, _onScreenLogger);
-            _graphedItems = new GraphedItems();
-
-            // Do a first render to get pixel data from the image for initial byte data allocation
-            using var image = _camera.Render(null);
-            _rawCanvasPixels = new byte[image.Height * image.PeekPixels().RowBytes];
-
+            _graphedItems = new GraphedItems(); 
             _scriptManager = new ScriptManager(_appSettings, _onScreenLogger);
+            
+            Window.AllowUserResizing = true;
+            Window.ClientSizeChanged += WindowOnClientSizeChanged;
         }
 
         protected override void Initialize()
         {
+            _camera = new Camera(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, _onScreenLogger);
+            WindowOnClientSizeChanged(null, EventArgs.Empty);
+
             _plotterUi = new PlotterUi(this, _appSettings, _scriptManager, _onScreenLogger, _camera);
             _plotterUi.AppToolbar.UpdateCameraOriginRequested += AppToolbarOnUpdateCameraOriginRequested;
             _plotterUi.AppToolbar.UpdateCameraBoundsRequested += AppToolbarOnUpdateCameraBoundsRequested;
@@ -108,7 +106,7 @@ namespace SharpPlotter.MonoGame
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            if (_graphTexture == null || _camera.CameraHasMoved || _graphedItems.ItemsChangedSinceLastRender)
+            if (_camera.CameraHasMoved || _graphedItems.ItemsChangedSinceLastRender)
             {
                 var itemsToRender = _graphedItems.GetItemsToRender();
                 using var image = _camera.Render(itemsToRender);
@@ -129,6 +127,7 @@ namespace SharpPlotter.MonoGame
             var pixelMap = image.PeekPixels();
             var pointer = pixelMap.GetPixels();
 
+            _rawCanvasPixels ??= new byte[image.Height * image.PeekPixels().RowBytes];
             Marshal.Copy(pointer, _rawCanvasPixels, 0, _rawCanvasPixels.Length);
 
             _graphTexture ??= new Texture2D(graphicsDevice, image.Width, image.Height);
@@ -187,6 +186,18 @@ namespace SharpPlotter.MonoGame
                    $"To start, use the File menu above to create a new script, or to open an existing one. {Environment.NewLine}{Environment.NewLine}" +
                    $"Scripts Directory: {_appSettings.ScriptFolderPath}{Environment.NewLine}" +
                    $"Text Editor Executable: {_appSettings.TextEditorExecutable}{Environment.NewLine}";
+        }
+
+        private void WindowOnClientSizeChanged(object? sender, EventArgs e)
+        {
+            var width = GraphicsDevice.Viewport.Width;
+            var height = GraphicsDevice.Viewport.Height;
+            _camera.ResizeViewport(width, height);
+            
+            // Raw pixel array and graph texture no longer have the proper dimensions, so clear them out so they are
+            // regenerated next render call.
+            _rawCanvasPixels = null;
+            _graphTexture = null;
         }
     }
 }

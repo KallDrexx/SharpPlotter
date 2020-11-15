@@ -37,8 +37,8 @@ namespace SharpPlotter.Rendering
         private const int FunctionPixelResolution = 10;
 
         private readonly OnScreenLogger _onScreenLogger;
-        private readonly SKSurface _surface;
-        private readonly int _width, _height, _usableWidth, _usableHeight;
+        private int _width, _height, _usableWidth, _usableHeight;
+        private SKSurface _surface;
         private int _basePixelsPerXUnit, _basePixelsPerYUnit;
         private Point2d _origin;
         private float _zoomFactor;
@@ -109,15 +109,10 @@ namespace SharpPlotter.Rendering
 
         public Camera(int width, int height, OnScreenLogger onScreenLogger)
         {
-            _width = width;
-            _usableWidth = width - GridLineMargin * 2;
-            _height = height;
+            ResizeViewport(height, width);
+
             _onScreenLogger = onScreenLogger;
-            _usableHeight = height - GridLineMargin * 2;
-
-            var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
-            _surface = SKSurface.Create(info);
-
+            
             _basePixelsPerXUnit = StandardPixelsPerGraphUnit;
             _basePixelsPerYUnit = StandardPixelsPerGraphUnit;
             
@@ -190,6 +185,24 @@ namespace SharpPlotter.Rendering
             
             Origin = new Point2d(originX, originY);
             ZoomFactor = 1f;
+            CameraHasMoved = true;
+        }
+
+        /// <summary>
+        /// Updates the height and width of the target image
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        public void ResizeViewport(int width, int height)
+        {
+            _width = width;
+            _usableWidth = width - GridLineMargin * 2;
+            _height = height;
+            _usableHeight = height - GridLineMargin * 2;
+            
+            var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
+            _surface = SKSurface.Create(info);
+
             CameraHasMoved = true;
         }
 
