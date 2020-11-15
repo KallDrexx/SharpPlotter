@@ -163,7 +163,12 @@ namespace SharpPlotter.Scripting
             }
             
             var fullPath = Path.Combine(_appSettings.ScriptFolderPath, CurrentFileName);
-            Process.Start("cmd", $"/C {_appSettings.TextEditorExecutable} \"{fullPath}\"");
+            var info = new ProcessStartInfo("cmd", $"/C {_appSettings.TextEditorExecutable} \"{fullPath}\"")
+            {
+                CreateNoWindow = true
+            };
+
+            Process.Start(info);
         }
 
         private void SetupScriptRunner()
