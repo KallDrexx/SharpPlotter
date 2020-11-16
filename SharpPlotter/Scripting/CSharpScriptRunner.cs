@@ -32,6 +32,11 @@ namespace SharpPlotter.Scripting
 //    drawn as.  The `Points()` and `Segments()` methods can be given an `Enumerable<(float, float)>` to be given
 //    any number of points.
 //
+// The graph can be animated by calling `Graph.StartNextFrame()`.  All drawing commands called after the `StartNextFrame`
+//    method will be attached to a new animation frame, and previous animation frames will be un-editable.  All drawing
+//    commands called before the first `StartNextFrame` call will be for rendering the first animation frame.  The time
+//    each frame is displayed for defaults to 1 second, but can be changed by calling `Graph.SetFrameTime(seconds)`.
+//
 using System;
 using System.Linq;
 
@@ -330,6 +335,19 @@ using System.Linq;
                 _graphedItems.AddArrow(Color.White, 
                     new Point2d((float) start.x, (float) start.y),
                     new Point2d((float) end.x, (float) end.y));
+            }
+
+            public void StartNextFrame()
+            {
+                _graphedItems.StartNextFrame();
+            }
+
+            public void SetFrameTime(double seconds)
+            {
+                if (seconds > 0)
+                {
+                    _graphedItems.SecondsPerFrame = seconds;
+                }
             }
         }
     }

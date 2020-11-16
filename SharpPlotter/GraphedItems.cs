@@ -11,11 +11,9 @@ namespace SharpPlotter
 {
     public class GraphedItems
     {
-        private readonly List<RenderedPoint> _points = new List<RenderedPoint>();
-        private readonly List<RenderedSegment> _segments = new List<RenderedSegment>();
-        private readonly List<RenderedFunction> _functions = new List<RenderedFunction>();
-        private readonly List<RenderedArrow> _arrows = new List<RenderedArrow>();
-        private readonly List<RenderedPolygon> _polygons = new List<RenderedPolygon>();
+        private readonly List<Frame> _frames;
+        private int _currentRenderedFrameIndex;
+        private double _secondsSinceCreation;
 
         public Queue<string> Messages { get; } = new Queue<string>();
         
@@ -29,8 +27,15 @@ namespace SharpPlotter
         /// </summary>
         public Point2d? MaxCoordinates { get; private set; }
 
+        /// <summary>
+        /// How long each frame should be rendered
+        /// </summary>
+        public double SecondsPerFrame { get; set; } = 1;
+
         public GraphedItems()
         {
+            _frames = new List<Frame> {new Frame()};
+
             // Always start with true, as if this is a new object then obviously something has changed.
             ItemsChangedSinceLastRender = true;
         }
@@ -48,7 +53,7 @@ namespace SharpPlotter
         {
             points ??= Array.Empty<Point2d>();
             
-            _points.AddRange(points.Select(x => new RenderedPoint(x, color)));
+            _frames[^1].Points.AddRange(points.Select(x => new RenderedPoint(x, color)));
             GraphItemsUpdated();
         }
 
@@ -64,7 +69,7 @@ namespace SharpPlotter
             {
                 if (lastPoint != null)
                 {
-                    _segments.Add(new RenderedSegment(lastPoint.Value, point, color));
+                    _frames[^1].Segments.Add(new RenderedSegment(lastPoint.Value, point, color));
                 }
 
                 lastPoint = point;
@@ -80,7 +85,7 @@ namespace SharpPlotter
         {
             if (function == null) throw new ArgumentNullException(nameof(function));
             
-            _functions.Add(new RenderedFunction(color, function));
+            _frames[^1].Functions.Add(new RenderedFunction(color, function));
         }
 
         /// <summary>
@@ -88,17 +93,28 @@ namespace SharpPlotter
         /// </summary>
         public void AddArrow(Color color, Point2d start, Point2d end)
         {
-            _arrows.Add(new RenderedArrow(start, end, color));
+            _frames[^1].Arrows.Add(new RenderedArrow(start, end, color));
             GraphItemsUpdated();
         }
 
+        /// <summary>
+        /// Adds a filled in polygon between 3 or more points
+        /// </summary>
         public void AddPolygon(Color color, IEnumerable<Point2d> points)
         {
             points ??= Array.Empty<Point2d>();
             
             var polygon = new RenderedPolygon(color, points);
-            _polygons.Add(polygon);
+            _frames[^1].Polygons.Add(polygon);
             GraphItemsUpdated();
+        }
+
+        /// <summary>
+        /// Creates a new frame to add items into
+        /// </summary>
+        public void StartNextFrame()
+        {
+            _frames.Add(new Frame());
         }
         
         /// <summary>
@@ -107,18 +123,43 @@ namespace SharpPlotter
         internal ItemsToRender GetItemsToRender()
         {
             ItemsChangedSinceLastRender = false;
-            return new ItemsToRender(_points, _segments, _functions, _arrows, _polygons);
+            var frame = _frames[_currentRenderedFrameIndex];
+            
+            return new ItemsToRender(frame.Points, 
+                frame.Segments, 
+                frame.Functions, 
+                frame.Arrows, 
+                frame.Polygons);
+        }
+
+        /// <summary>
+        /// Updates the graphed items based on how long it's been since the last frame.  Used mainly to control
+        /// multiple frames
+        /// </summary>
+        internal void Update(double secondsSinceLastFrame)
+        {
+            _secondsSinceCreation += secondsSinceLastFrame;
+
+            var totalCycleTime = _frames.Count * SecondsPerFrame;
+            var frameToRender = (int) (_secondsSinceCreation / totalCycleTime * _frames.Count) % _frames.Count;
+
+            if (frameToRender != _currentRenderedFrameIndex)
+            {
+                _currentRenderedFrameIndex = frameToRender;
+                ItemsChangedSinceLastRender = true;
+            }
         }
 
         private void GraphItemsUpdated()
         {
             ItemsChangedSinceLastRender = true;
             
-            var allCoordinates = _points.Select(x => x.Point)
-                .Union(_segments.Select(x => x.Start))
-                .Union(_segments.Select(x => x.End))
-                .Union(_arrows.Select(x => x.Start))
-                .Union(_arrows.Select(x => x.End))
+            var allCoordinates = _frames.SelectMany(x => x.Points).Select(x => x.Point)
+                .Union(_frames.SelectMany(x => x.Segments).Select(x => x.Start))
+                .Union(_frames.SelectMany(x => x.Segments).Select(x => x.End))
+                .Union(_frames.SelectMany(x => x.Arrows).Select(x => x.Start))
+                .Union(_frames.SelectMany(x => x.Arrows).Select(x => x.End))
+                .Union(_frames.SelectMany(x => x.Polygons).SelectMany(x => x.Points))
                 .Distinct()
                 .ToArray();
 
@@ -145,6 +186,15 @@ namespace SharpPlotter
                 MinCoordinates = null;
                 MaxCoordinates = null;
             }
+        }
+
+        private class Frame
+        {
+            public List<RenderedPoint> Points { get; set; } = new List<RenderedPoint>();
+            public List<RenderedSegment> Segments { get; set; } = new List<RenderedSegment>();
+            public List<RenderedFunction> Functions { get; set; } = new List<RenderedFunction>();
+            public List<RenderedArrow> Arrows { get; set; } = new List<RenderedArrow>();
+            public List<RenderedPolygon> Polygons { get; set; } = new List<RenderedPolygon>();
         }
     }
 }

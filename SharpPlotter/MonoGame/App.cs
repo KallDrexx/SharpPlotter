@@ -99,6 +99,7 @@ namespace SharpPlotter.MonoGame
                 }
             }
 
+            _graphedItems?.Update(gameTime.ElapsedGameTime.TotalSeconds);
             base.Update(gameTime);
         }
 

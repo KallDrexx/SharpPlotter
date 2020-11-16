@@ -59,6 +59,8 @@ Scripts are given access to a global object that represents the graph.  For C# s
 
 All methods (except `Log()`) can optionally have a `Color` value specified as the first argument for the color the drawings should be done with.  If no color is specified than they will default to white.
 
+Graphs can be animated by defining multiple frames.  Each frame consists of it's own distinct set of drawn objects and each frame is its own blank canvas.  A new frame can be defined by calling the `StartNextFrame()` graph method followed by drawing commands that should be run for that frame.  All drawing commands called before the first `StartNextFrame()` will be drawn for the first / initial frame.  By default each frame is rendered for one second, but that is changeable by calling `SetFrameTime()` on the graph and passing in the number of seconds each frame should be rendered for.
+
 ## Scripting Languages
 
 As of right now 3 languages are supported - C#, Javascript, and Python.  It is important that all script files use the correct language extension (`.cs`, `.js` and `.py` respectively), as that is how SharpPlotter knows which scripting engine to use for each file.

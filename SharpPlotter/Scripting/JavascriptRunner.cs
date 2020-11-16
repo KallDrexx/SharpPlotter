@@ -38,6 +38,12 @@ namespace SharpPlotter.Scripting
 //
 // All graph functions except `Log()` can have a first parameter being a color value to change the color of the 
 //    drawn data.    
+//
+// The graph can be animated by calling `graph.StartNextFrame()`.  All drawing commands called after the `StartNextFrame`
+//    method will be attached to a new animation frame, and previous animation frames will be un-editable.  All drawing
+//    commands called before the first `StartNextFrame` call will be for rendering the first animation frame.  The time
+//    each frame is displayed for defaults to 1 second, but can be changed by calling `Graph.SetFrameTime(seconds)`.
+//
 
 ".TrimStart();
         
@@ -144,6 +150,19 @@ namespace SharpPlotter.Scripting
                 }
                 
                 _graphedItems.AddArrow(Color.White, startPoints[0], endPoints[0]);
+            }
+
+            public void StartNextFrame()
+            {
+                _graphedItems.StartNextFrame();
+            }
+
+            public void SetFrameTime(double seconds)
+            {
+                if (seconds > 0)
+                {
+                    _graphedItems.SecondsPerFrame = seconds;
+                }
             }
 
             private static (Color color, Point2d[] points) ParseObjects(params object[] objects)
