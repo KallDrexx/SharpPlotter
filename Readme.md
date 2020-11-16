@@ -54,6 +54,7 @@ Scripts are given access to a global object that represents the graph.  For C# s
 * `Segments()` - Used to draw one or more line segments on the graph.  Any number of points can be passed in, and a line segment will be drawn from one point to the next in the order specified.
 * `Function()` - Adds an unbounded function that will be drawn for every visible X graph value on the screen.
 * `Arrow()` - Creates an arrow from a starting point that points to an ending point.  Must have only 2 points passed into it as arguments.
+* `Polygon()` - Draws a filled in polygon between the specified points.  Must have at least 3 points to work.
 * `Log()` - When passed a single string, this message will be displayed on screen.  Multiple calls to `Log()` can be made for multiple messages.  This can be used for debugging or for presenting non-visible data.
 
 All methods (except `Log()`) can optionally have a `Color` value specified as the first argument for the color the drawings should be done with.  If no color is specified than they will default to white.
