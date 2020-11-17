@@ -189,7 +189,7 @@ namespace SharpPlotter.MonoGame
                    $"Text Editor Executable: {_appSettings.TextEditorExecutable}{Environment.NewLine}";
         }
 
-        private void WindowOnClientSizeChanged(object? sender, EventArgs e)
+        private void WindowOnClientSizeChanged(object sender, EventArgs e)
         {
             var width = GraphicsDevice.Viewport.Width;
             var height = GraphicsDevice.Viewport.Height;
