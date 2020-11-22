@@ -14,18 +14,41 @@ namespace SharpPlotter
         private readonly List<Frame> _frames;
         private int _currentRenderedFrameIndex;
         private double _secondsSinceCreation;
+        private Point2d? _minCoordinates, _maxCoordinates;
 
         public Queue<string> Messages { get; } = new Queue<string>();
-        
+
         /// <summary>
         /// The smallest X and Y values across all graphed items
         /// </summary>
-        public Point2d? MinCoordinates { get; private set; }
+        public Point2d? MinCoordinates
+        {
+            get
+            {
+                if (_minCoordinates == null)
+                {
+                    RecalculateMinAndMaxCoordinates();
+                }
+
+                return _minCoordinates;
+            }
+        }
         
         /// <summary>
         /// The largest X and Y values across all graphed items
         /// </summary>
-        public Point2d? MaxCoordinates { get; private set; }
+        public Point2d? MaxCoordinates
+        {
+            get
+            {
+                if (_maxCoordinates == null)
+                {
+                    RecalculateMinAndMaxCoordinates();
+                }
+
+                return _maxCoordinates;
+            }
+        }
 
         /// <summary>
         /// How long each frame should be rendered
@@ -153,7 +176,13 @@ namespace SharpPlotter
         private void GraphItemsUpdated()
         {
             ItemsChangedSinceLastRender = true;
-            
+
+            _minCoordinates = null;
+            _maxCoordinates = null;
+        }
+
+        private void RecalculateMinAndMaxCoordinates()
+        {
             var allCoordinates = _frames.SelectMany(x => x.Points).Select(x => x.Point)
                 .Union(_frames.SelectMany(x => x.Segments).Select(x => x.Start))
                 .Union(_frames.SelectMany(x => x.Segments).Select(x => x.End))
@@ -178,13 +207,13 @@ namespace SharpPlotter
                     if (maxY < coordinate.Y) maxY = coordinate.Y;
                 }
                 
-                MinCoordinates = new Point2d(minX, minY);
-                MaxCoordinates = new Point2d(maxX, maxY);
+                _minCoordinates = new Point2d(minX, minY);
+                _maxCoordinates = new Point2d(maxX, maxY);
             }
             else
             {
-                MinCoordinates = null;
-                MaxCoordinates = null;
+                _minCoordinates = null;
+                _maxCoordinates = null;
             }
         }
 
